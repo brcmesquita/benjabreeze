@@ -70,7 +70,7 @@ def temp_colors(t):
     return TEMP_SCALE[-1][1:]
 
 
-def make_icon(t):
+def make_icon(t, unit="C"):
     bg, fg = temp_colors(t)
     pm = QPixmap(64, 64)
     pm.fill(Qt.GlobalColor.transparent)
@@ -88,9 +88,10 @@ def make_icon(t):
     p.setPen(QColor(fg))
     f = QFont()
     f.setBold(True)
-    f.setPixelSize(36)
+    text = "?" if t is None else f"{pf.to_unit(t, unit):.0f}"
+    f.setPixelSize(36 if len(text) <= 2 else 27)
     p.setFont(f)
-    p.drawText(pm.rect(), Qt.AlignmentFlag.AlignCenter, "?" if t is None else f"{t:.0f}")
+    p.drawText(pm.rect(), Qt.AlignmentFlag.AlignCenter, text)
     p.end()
     return QIcon(pm)
 
@@ -109,6 +110,7 @@ class Tray:
         self.cfg = pf.Config()
         self.warned = False
         self.warn_mode = None
+        self.settings = pf.load_settings()
         self.tray = QSystemTrayIcon(make_icon(None))
         self.menu = QMenu()
 
@@ -139,6 +141,16 @@ class Tray:
             self.actions[key] = self._mode_action(sub, key, f"{pct}%")
 
         self.menu.addSeparator()
+        sub = self.menu.addMenu("Unidade de temperatura")
+        unit_group = QActionGroup(sub)
+        self.unit_actions = {}
+        for u, label in (("C", "Celsius (°C)"), ("F", "Fahrenheit (°F)")):
+            a = QAction(label, sub, checkable=True)
+            a.setChecked(self.settings["unit"] == u)
+            a.triggered.connect(lambda _=False, u=u: self.set_unit(u))
+            unit_group.addAction(a)
+            sub.addAction(a)
+            self.unit_actions[u] = a
         quit_act = self.menu.addAction("Fechar ícone")
         quit_act.triggered.connect(app.quit)
 
@@ -182,7 +194,7 @@ class Tray:
             pct = mode[6:]
             self.tray.showMessage(
                 "Notebook esquentando",
-                f"{tmax:.0f}°C com a ventoinha fixa em {pct}%.\n"
+                f"{pf.fmt_temp(tmax, self.settings['unit'])} com a ventoinha fixa em {pct}%.\n"
                 f"Clique aqui para usar mínimo de {pct}% (sobe se precisar).",
                 QSystemTrayIcon.MessageIcon.Warning,
                 10000,
@@ -190,6 +202,20 @@ class Tray:
             self.warned = True
         elif self.warned and tmax < warn - 5:
             self.warned = False
+
+    def set_unit(self, unit):
+        self.settings = pf.save_settings(unit=unit)
+        self.last_icon_temp, self.last_tip = object(), None
+        self.refresh()
+
+    def update_mode_checks(self, mode=None, active=None):
+        if active is None:
+            active = pf.service_running()
+        if mode is None:
+            mode = pf.read_mode("?") if active else ""
+        for key, a in self.actions.items():
+            a.setChecked(key == mode)
+            a.setEnabled(active)
 
     def set_mode(self, mode):
         try:
@@ -220,24 +246,23 @@ class Tray:
             self.timer.setInterval(want)
 
         cpu = t.get("cpu_pkg")
+        unit = self.settings["unit"]
         lines = [
-            f"CPU: {cpu:.0f}°C" if cpu is not None else "CPU: ?",
-            f"Máx. sensores: {tmax:.0f}°C" if tmax is not None else "Sensores: ?",
+            f"CPU: {pf.fmt_temp(cpu, unit)}",
+            f"Máx. sensores: {pf.fmt_temp(tmax, unit)}",
             "Ventoinhas: " + " / ".join(f"{r} RPM" if r is not None else "?" for r in fans),
             f"Modo: {mode_label(mode)}",
         ]
         self.check_warning(mode, tmax)
         for a, txt in zip(self.info, lines):
             a.setText(txt)
-        for key, a in self.actions.items():
-            a.setChecked(key == mode)
-            a.setEnabled(active)
+        self.update_mode_checks(mode, active)
 
         # Só redesenha/atualiza quando algo visível mudou
         icon_temp = None if tmax is None else round(tmax)
-        if icon_temp != self.last_icon_temp:
-            self.tray.setIcon(make_icon(icon_temp))
-            self.last_icon_temp = icon_temp
+        if (icon_temp, unit) != self.last_icon_temp:
+            self.tray.setIcon(make_icon(icon_temp, unit=unit))
+            self.last_icon_temp = (icon_temp, unit)
         tip = "BenjaBreeze\n" + "\n".join(lines)
         if tip != self.last_tip:
             self.tray.setToolTip(tip)

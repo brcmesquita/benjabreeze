@@ -62,9 +62,14 @@ o modo volta ao padrão).
 | `benjabreeze max` | 100 % |
 | `benjabreeze set <0-100>` | velocidade fixa — qualquer valor: `set 30`, `set 45`, `set 80`… |
 | `benjabreeze min <0-100>` | velocidade mínima — ex. `min 40`: nunca abaixo de 40 %, sobe se esquentar |
+| `benjabreeze unit C` / `unit F` | temperaturas em Celsius ou Fahrenheit (fica salvo) |
 | `benjabreeze --version` | versão instalada |
 
 Ícone na bandeja: `benjabreeze-tray` (ou "BenjaBreeze" no menu; inicia no login).
+
+**Unidade:** no menu do ícone, "Unidade de temperatura" alterna entre °C e °F. A escolha
+fica salva em `~/.config/benjabreeze/settings.json` e vale também para o terminal. As
+curvas do arquivo de configuração continuam em °C.
 
 O modo volta ao `default_mode` a cada boot.
 
@@ -111,7 +116,8 @@ meteorológicos e câmeras térmicas — do azul gelo ao vermelho vulcão:
 
 ## Consumo de recursos e privacidade
 
-- **Nada é gravado em disco.** Sem logs, sem histórico, sem cache. O único arquivo de
+- **Nada é gravado em disco** além das suas preferências (`~/.config/benjabreeze/settings.json`,
+  poucos bytes, só quando você muda algo). Sem logs, sem histórico, sem cache. O único arquivo de
   estado é `/run/benjabreeze/mode` (alguns bytes, em RAM), apagado quando o serviço para.
 - **Nada sai do seu computador.** Não há rede, telemetria ou coleta de dados.
 - **O que é lido:** a cada 2 s, poucos arquivos virtuais do kernel (`/sys`) com
@@ -156,7 +162,7 @@ do mínimo.
 
 Próximas versões, uma funcionalidade por release:
 
-- **v0.7.0 — Relatório de compatibilidade**: `benjabreeze report` gera um texto com
+- **Relatório de compatibilidade**: `benjabreeze report` gera um texto com
   modelo, BIOS, kernel e interfaces detectadas, para colar numa issue do GitHub.
 
 ### Milestone: modo aprendizado e base de dados por modelo
