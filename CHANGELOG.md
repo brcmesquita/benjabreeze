@@ -3,6 +3,15 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.5.0] — 2026-11-15
+
+### Adicionado
+- Modo `min N` (ex. `benjabreeze min 40`): velocidade mínima de trabalho. Nunca fica
+  abaixo de N %; se a temperatura subir, acelera seguindo a curva (`min_curve`, padrão
+  `curve`) e volta ao mínimo quando esfria.
+- Ícone: submenu "Velocidade mínima" (30/40/50/60 %) e nomes legíveis dos modos
+  ("Fixo 50%", "Mínimo 40%").
+
 ## [0.4.0] — 2026-11-15
 
 ### Alterado
@@ -48,6 +57,7 @@ Primeira versão pública — só terminal (nome original: `predator-fan`).
 - Proteção: 100 % acima de 92 °C; controle volta ao firmware se o serviço parar.
 - `install.sh` / `uninstall.sh`.
 
+[0.5.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.1.0...v0.2.0

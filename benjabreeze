@@ -8,6 +8,8 @@ Uso:
   benjabreeze silent            usa a curva silenciosa
   benjabreeze max               100% nas duas ventoinhas
   benjabreeze set <0-100>       velocidade fixa (%), qualquer valor
+  benjabreeze min <0-100>       velocidade mínima: nunca abaixo de N%, mas sobe
+                                 seguindo a curva se esquentar e depois volta
   benjabreeze watch             status atualizando a cada segundo
   benjabreeze --version         mostra a versão
   benjabreeze daemon            (usado pelo systemd)
@@ -19,7 +21,7 @@ import signal
 import sys
 import time
 
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 CONF = "/etc/benjabreeze.json"
 RUN_DIR = "/run/benjabreeze"          # tmpfs (RAM): nada é gravado em disco
 MODE_FILE = RUN_DIR + "/mode"
@@ -28,6 +30,7 @@ DEFAULT_CONF = {
     "hysteresis": 4,          # °C que a temperatura precisa cair antes de reduzir
     "panic_temp": 92,         # acima disso: 100% em qualquer modo exceto auto
     "default_mode": "auto",
+    "min_curve": "curve",     # curva usada acima do mínimo no modo min
     "curves": {               # [temperatura °C, velocidade %], interpolação linear
         "curve":  [[45, 25], [60, 40], [70, 55], [80, 75], [88, 100]],
         "silent": [[50, 15], [65, 30], [75, 45], [85, 70], [90, 100]],
@@ -128,9 +131,9 @@ def service_running():
 def valid_mode(m, conf):
     if m in ("auto", "max") or m in conf["curves"]:
         return True
-    if m.startswith("fixed:"):
+    if m.startswith(("fixed:", "min:")):
         try:
-            return 0 <= int(m[6:]) <= 100
+            return 0 <= int(m.split(":", 1)[1]) <= 100
         except ValueError:
             return False
     return False
@@ -162,6 +165,9 @@ def compute_target(mode, tmax, conf, st):
     elif tmax < ref - conf["hysteresis"]:
         ref = tmax + conf["hysteresis"]
     st["ref"] = ref
+    if mode.startswith("min:"):
+        curve = conf["curves"].get(conf.get("min_curve"), DEFAULT_CONF["curves"]["curve"])
+        return max(int(mode[4:]), min(100, round(interp(curve, ref))))
     return max(0, min(100, round(interp(conf["curves"][mode], ref))))
 
 
@@ -285,6 +291,8 @@ def main():
             pass
     elif a[0] == "set" and len(a) == 2:
         set_mode(f"fixed:{a[1].rstrip('%')}")
+    elif a[0] == "min" and len(a) == 2:
+        set_mode(f"min:{a[1].rstrip('%')}")
     else:
         set_mode(a[0])
 

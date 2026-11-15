@@ -11,7 +11,8 @@ hwmon interface (no out-of-tree modules). Lightweight daemon + CLI + KDE/Qt tray
 
 ## Recursos
 
-- Modos: `auto` (firmware Acer), `curve`, `silent`, `max` e velocidade fixa (`set N`)
+- Modos: `auto` (firmware Acer), `curve`, `silent`, `max`, velocidade fixa (`set N`) e
+  velocidade mínima que sobe sozinha se esquentar (`min N`)
 - Curvas temperatura → velocidade configuráveis, com histerese (evita sobe-e-desce)
 - Ícone na bandeja mostrando a temperatura, com menu para trocar de modo
 - Segurança: acima de 92 °C (configurável) força 100 %; se o serviço parar ou falhar,
@@ -58,6 +59,7 @@ o modo volta ao padrão).
 | `benjabreeze silent` | curva silenciosa |
 | `benjabreeze max` | 100 % |
 | `benjabreeze set <0-100>` | velocidade fixa — qualquer valor: `set 30`, `set 45`, `set 80`… |
+| `benjabreeze min <0-100>` | velocidade mínima — ex. `min 40`: nunca abaixo de 40 %, sobe se esquentar |
 | `benjabreeze --version` | versão instalada |
 
 Ícone na bandeja: `benjabreeze-tray` (ou "BenjaBreeze" no menu; inicia no login).
@@ -75,7 +77,16 @@ O modo volta ao `default_mode` a cada boot.
 - **`max`** — 100 % o tempo todo.
 - **`set N`** — **fixo** em N %, não importa a temperatura. A única exceção é a proteção:
   a partir de 92 °C vai para 100 %. Se você quer "pelo menos N %, mas subindo quando
-  precisar", aguarde o modo `min` ([roadmap](#roadmap)).
+  precisar", use `min`.
+- **`min N`** — velocidade mínima de trabalho. Fica em N % enquanto a temperatura está
+  sob controle; se ela subir (troca para modo desempenho, carga pesada), acelera seguindo
+  a curva `curve` até a temperatura cair e então volta aos N %. Ideal para quem gosta do
+  notebook sempre frio sem o risco de ficar preso numa velocidade insuficiente.
+  Exemplo com `min 40`:
+
+  | Temperatura | 50 °C | 65 °C | 75 °C | 82 °C | esfriando até 50 °C |
+  |---|---|---|---|---|---|
+  | Velocidade | 40 % | 48 % | 65 % | 81 % | volta gradualmente a 40 % |
 
 ## Consumo de recursos e privacidade
 
@@ -106,6 +117,7 @@ O modo volta ao `default_mode` a cada boot.
   "hysteresis": 4,
   "panic_temp": 92,
   "default_mode": "auto",
+  "min_curve": "curve",
   "curves": {
     "curve":  [[45, 25], [60, 40], [70, 55], [80, 75], [88, 100]],
     "silent": [[50, 15], [65, 30], [75, 45], [85, 70], [90, 100]]
@@ -115,16 +127,13 @@ O modo volta ao `default_mode` a cada boot.
 
 Cada ponto é `[temperatura °C, velocidade %]`. Você pode criar curvas novas e usá-las
 com `benjabreeze <nome>`. A temperatura usada é a maior entre os sensores do `acer_wmi`
-e o pacote da CPU (`coretemp`).
+e o pacote da CPU (`coretemp`). `min_curve` define qual curva o modo `min` segue acima
+do mínimo.
 
 ## Roadmap
 
 Próximas versões, uma funcionalidade por release:
 
-- **v0.5.0 — Velocidade mínima (`min N`)**: ex. `benjabreeze min 40` — nunca abaixo de
-  40 %; se a temperatura subir (troca para modo desempenho, carga pesada), acelera
-  seguindo a curva até a temperatura cair, e então volta aos 40 %. Para quem gosta do
-  notebook sempre frio sem medo de ficar preso numa velocidade insuficiente.
 - **v0.6.0 — Aviso de temperatura**: no modo `set` fixo, o ícone mostra uma notificação
   quando a temperatura passa de um limite (ex. 85 °C), sugerindo aumentar a velocidade
   ou usar `min`.

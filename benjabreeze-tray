@@ -32,6 +32,15 @@ MODES = [
     ("max", "Máximo (100%)"),
 ]
 FIXED = [30, 50, 70]
+MINIMUM = [30, 40, 50, 60]
+
+
+def mode_label(mode):
+    if mode.startswith("fixed:"):
+        return f"Fixo {mode[6:]}%"
+    if mode.startswith("min:"):
+        return f"Mínimo {mode[4:]}% (sobe se esquentar)"
+    return dict(MODES).get(mode, mode)
 
 
 def temp_color(t):
@@ -92,6 +101,10 @@ class Tray:
         for pct in FIXED:
             key = f"fixed:{pct}"
             self.actions[key] = self._mode_action(sub, key, f"{pct}%")
+        sub = self.menu.addMenu("Velocidade mínima (sobe se esquentar)")
+        for pct in MINIMUM:
+            key = f"min:{pct}"
+            self.actions[key] = self._mode_action(sub, key, f"{pct}%")
 
         self.menu.addSeparator()
         quit_act = self.menu.addAction("Fechar ícone")
@@ -151,7 +164,7 @@ class Tray:
             f"CPU: {cpu:.0f}°C" if cpu is not None else "CPU: ?",
             f"Máx. sensores: {tmax:.0f}°C" if tmax is not None else "Sensores: ?",
             "Ventoinhas: " + " / ".join(f"{r} RPM" if r is not None else "?" for r in fans),
-            f"Modo: {dict(MODES).get(mode, mode)}",
+            f"Modo: {mode_label(mode)}",
         ]
         for a, txt in zip(self.info, lines):
             a.setText(txt)
