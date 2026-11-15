@@ -63,6 +63,7 @@ o modo volta ao padrão).
 | `benjabreeze set <0-100>` | velocidade fixa — qualquer valor: `set 30`, `set 45`, `set 80`… |
 | `benjabreeze min <0-100>` | velocidade mínima — ex. `min 40`: nunca abaixo de 40 %, sobe se esquentar |
 | `benjabreeze unit C` / `unit F` | temperaturas em Celsius ou Fahrenheit (fica salvo) |
+| `benjabreeze lang <código>` | idioma: `auto`, `pt_BR`, `en_US`, `es`, `de`, `fr`, `ru`, `ja`, `ko`, `zh_TW`, `zh_CN` (fica salvo) |
 | `benjabreeze --version` | versão instalada |
 
 Ícone na bandeja: `benjabreeze-tray` (ou "BenjaBreeze" no menu; inicia no login).
@@ -70,6 +71,16 @@ o modo volta ao padrão).
 **Unidade:** no menu do ícone, "Unidade de temperatura" alterna entre °C e °F. A escolha
 fica salva em `~/.config/benjabreeze/settings.json` e vale também para o terminal. As
 curvas do arquivo de configuração continuam em °C.
+
+**Idioma:** português, inglês, espanhol, alemão, francês, russo, japonês, coreano, chinês
+tradicional e chinês simplificado. Por padrão segue o idioma do sistema; troque em
+"Idioma" no menu do ícone ou com `benjabreeze lang`. As traduções ficam em
+[`i18n.json`](i18n.json) — correções de falantes nativos são muito bem-vindas.
+
+**Fechar:** fecha só o ícone. O serviço continua rodando e as ventoinhas ficam no modo
+escolhido. Para abrir o ícone de novo, procure "BenjaBreeze" no menu de aplicativos. Para
+desligar o BenjaBreeze de vez (o firmware da Acer volta a controlar), use
+`sudo systemctl stop benjabreeze`.
 
 O modo volta ao `default_mode` a cada boot.
 

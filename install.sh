@@ -19,6 +19,7 @@ if [ -f /etc/systemd/system/predator-fan.service ]; then
 fi
 install -m 755 "$D/benjabreeze" /usr/local/bin/benjabreeze
 install -m 755 "$D/benjabreeze-tray" /usr/local/bin/benjabreeze-tray
+install -D -m 644 "$D/i18n.json" /usr/local/share/benjabreeze/i18n.json
 install -m 644 "$D/benjabreeze.service" /etc/systemd/system/benjabreeze.service
 install -m 644 "$D/benjabreeze-tray.desktop" /usr/share/applications/benjabreeze-tray.desktop
 install -m 644 "$D/benjabreeze-tray.desktop" /etc/xdg/autostart/benjabreeze-tray.desktop

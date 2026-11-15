@@ -12,6 +12,8 @@ Uso:
                                  seguindo a curva se esquentar e depois volta
   benjabreeze watch             status atualizando a cada segundo
   benjabreeze unit <C|F>        mostra temperaturas em Celsius ou Fahrenheit (fica salvo)
+  benjabreeze lang <código>     idioma: auto, pt_BR, en_US, es, de, fr, ru, ja, ko,
+                                zh_TW, zh_CN (fica salvo)
   benjabreeze --version         mostra a versão
   benjabreeze daemon            (usado pelo systemd)
 """
@@ -22,7 +24,7 @@ import signal
 import sys
 import time
 
-VERSION = "0.8.0"
+VERSION = "0.9.0"
 CONF = "/etc/benjabreeze.json"
 RUN_DIR = "/run/benjabreeze"          # tmpfs (RAM): nada é gravado em disco
 MODE_FILE = RUN_DIR + "/mode"
@@ -118,7 +120,7 @@ class Config:
 
 
 # ---------------------------------------------------------------- preferências do usuário
-DEFAULT_SETTINGS = {"unit": "C"}
+DEFAULT_SETTINGS = {"unit": "C", "lang": "auto"}
 
 
 def settings_path():
@@ -148,6 +150,64 @@ def save_settings(**changes):
         json.dump(s, f, indent=2)
     os.replace(tmp, path)
     return s
+
+
+# ---------------------------------------------------------------- idiomas
+LANGS = [
+    ("pt_BR", "Português (Brasil)"), ("en_US", "English (US)"), ("es", "Español"),
+    ("de", "Deutsch"), ("fr", "Français"), ("ru", "Русский"), ("ja", "日本語"),
+    ("ko", "한국어"), ("zh_TW", "繁體中文"), ("zh_CN", "简体中文"),
+]
+_I18N = None
+_LANG = None
+
+
+def system_lang():
+    """Idioma do sistema mapeado para um dos suportados (padrão: inglês)."""
+    for var in ("LANGUAGE", "LC_ALL", "LC_MESSAGES", "LANG"):
+        v = os.environ.get(var, "").split(":")[0].split(".")[0]
+        if not v or v in ("C", "POSIX"):
+            continue
+        low = v.lower().replace("-", "_")
+        if low.startswith("zh"):
+            return "zh_TW" if any(x in low for x in ("tw", "hk", "mo", "hant")) else "zh_CN"
+        for code, _ in LANGS:
+            if low.split("_")[0] == code.lower().split("_")[0]:
+                return code
+    return "en_US"
+
+
+def set_lang(setting):
+    global _LANG
+    codes = [c for c, _ in LANGS]
+    _LANG = setting if setting in codes else system_lang()
+    return _LANG
+
+
+def _load_i18n():
+    global _I18N
+    here = os.path.dirname(os.path.realpath(__file__))
+    for path in (os.path.join(here, "i18n.json"), "/usr/local/share/benjabreeze/i18n.json"):
+        try:
+            with open(path, encoding="utf-8") as f:
+                _I18N = json.load(f)
+                return
+        except (OSError, ValueError):
+            pass
+    _I18N = {}
+
+
+def tr(key, **kw):
+    """Texto traduzido. Se faltar no idioma, usa inglês, depois português, depois a chave."""
+    if _I18N is None:
+        _load_i18n()
+    if _LANG is None:
+        set_lang(load_settings().get("lang", "auto"))
+    for lang in (_LANG, "en_US", "pt_BR"):
+        text = _I18N.get(lang, {}).get(key)
+        if text is not None:
+            return text.format(**kw) if kw else text
+    return key
 
 
 def to_unit(c, unit):
@@ -295,33 +355,35 @@ def status():
     hw = find_hwmon("acer")
     t = temps()
     unit = load_settings()["unit"]
-    print("Temperaturas: " + "  ".join(f"{k}={fmt_temp(v, unit)}" for k, v in t.items()))
+    print(f"{tr('temps')}: " + "  ".join(f"{k}={fmt_temp(v, unit)}" for k, v in t.items()))
     if hw:
         for i in (1, 2):
             try:
                 rpm = rd(f"{hw}/fan{i}_input")
                 pwm = rd(f"{hw}/pwm{i}")
                 en = rd(f"{hw}/pwm{i}_enable")
-                print(f"Ventoinha {i} ({'CPU' if i == 1 else 'GPU'}): {rpm:5d} RPM  "
-                      f"pwm={pwm * 100 // 255:3d}%  {'manual' if en == 1 else 'firmware'}")
+                ctl = tr("ctl_manual") if en == 1 else tr("ctl_firmware")
+                print(f"{tr('fan')} {i} ({'CPU' if i == 1 else 'GPU'}): {rpm:5d} RPM  "
+                      f"pwm={pwm * 100 // 255:3d}%  {ctl}")
             except OSError:
                 pass
     active = service_running()
-    print(f"Serviço: {'ativo' if active else 'parado'}   Modo: {read_mode('?') if active else '-'}")
+    print(f"{tr('service')}: {tr('active') if active else tr('stopped')}   "
+          f"{tr('mode', m=read_mode('?') if active else '-')}")
 
 
 def set_mode(m):
     conf = load_conf()
     if not valid_mode(m, conf):
-        sys.exit(f"modo inválido: {m}")
+        sys.exit(tr("invalid_mode", m=m))
     if not service_running():
-        sys.exit("o serviço não está rodando (sudo systemctl start benjabreeze)")
+        sys.exit(tr("svc_not_running_cli"))
     try:
         with open(MODE_FILE, "w") as f:
             f.write(m)
     except OSError as e:
         sys.exit(f"não consegui trocar o modo: {e}")
-    print(f"modo -> {m}")
+    print(tr("mode_set", m=m))
 
 
 def main():
@@ -344,9 +406,17 @@ def main():
             pass
     elif a[0] == "unit":
         if len(a) != 2 or a[1].upper() not in ("C", "F"):
-            sys.exit("uso: benjabreeze unit C  |  benjabreeze unit F")
+            sys.exit(tr("unit_usage"))
         save_settings(unit=a[1].upper())
-        print(f"unidade -> °{a[1].upper()}")
+        print(tr("unit_set", u=a[1].upper()))
+    elif a[0] == "lang":
+        codes = ["auto"] + [c for c, _ in LANGS]
+        if len(a) != 2 or a[1] not in codes:
+            sys.exit(tr("lang_usage") + "\n  " + "\n  ".join(
+                ["auto"] + [f"{c:6} {n}" for c, n in LANGS]))
+        save_settings(lang=a[1])
+        set_lang(a[1])
+        print(tr("lang_set", l=dict(LANGS).get(_LANG, _LANG)))
     elif a[0] == "set" and len(a) == 2:
         set_mode(f"fixed:{a[1].rstrip('%')}")
     elif a[0] == "min" and len(a) == 2:

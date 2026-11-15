@@ -7,5 +7,6 @@ rm -f /usr/local/bin/benjabreeze /usr/local/bin/benjabreeze-tray \
       /etc/systemd/system/benjabreeze.service \
       /usr/share/applications/benjabreeze-tray.desktop \
       /etc/xdg/autostart/benjabreeze-tray.desktop
+rm -rf /usr/local/share/benjabreeze
 systemctl daemon-reload
 echo "Removido. (config mantida em /etc/benjabreeze.json — apague se quiser)"

@@ -2,7 +2,8 @@
 """benjabreeze-tray — ícone na bandeja do BenjaBreeze (PyQt6).
 
 Mostra a temperatura no ícone e permite trocar o modo das ventoinhas
-pelo menu. Depende do serviço benjabreeze estar rodando.
+pelo menu. Depende do serviço benjabreeze estar rodando. Fechar o ícone
+não para o serviço: as ventoinhas continuam no modo escolhido.
 """
 import importlib.machinery
 import importlib.util
@@ -25,22 +26,21 @@ for _p in (os.path.join(_here, "benjabreeze"), "/usr/local/bin/benjabreeze"):
 else:
     sys.exit("benjabreeze não encontrado")
 
-MODES = [
-    ("auto", "Automático (firmware Acer)"),
-    ("curve", "Curva normal"),
-    ("silent", "Silencioso"),
-    ("max", "Máximo (100%)"),
-]
+tr = pf.tr
+
+MODES = ["auto", "curve", "silent", "max"]   # rótulos em i18n.json: mode_<nome>
 FIXED = [30, 50, 70]
 MINIMUM = [30, 40, 50, 60]
 
 
 def mode_label(mode):
     if mode.startswith("fixed:"):
-        return f"Fixo {mode[6:]}%"
+        return tr("mode_fixed", n=mode[6:])
     if mode.startswith("min:"):
-        return f"Mínimo {mode[4:]}%"
-    return dict(MODES).get(mode, mode)
+        return tr("mode_min", n=mode[4:])
+    if mode in MODES:
+        return tr("mode_" + mode)
+    return mode
 
 
 # Escala de cores de temperatura (estilo mapa meteorológico / câmera térmica):
@@ -111,8 +111,11 @@ class Tray:
         self.warned = False
         self.warn_mode = None
         self.settings = pf.load_settings()
+        pf.set_lang(self.settings["lang"])
+
         self.tray = QSystemTrayIcon(make_icon(None))
         self.menu = QMenu()
+        self.menu.setToolTipsVisible(True)
 
         title = self.menu.addAction(f"BenjaBreeze {pf.VERSION}")
         title.setEnabled(False)
@@ -126,34 +129,32 @@ class Tray:
             a.setEnabled(False)
         self.menu.addSeparator()
 
+        # Modos
         self.group = QActionGroup(self.menu)
         self.group.setExclusive(True)
         self.actions = {}
-        for key, label in MODES:
-            self.actions[key] = self._mode_action(self.menu, key, label)
-        sub = self.menu.addMenu("Velocidade mínima")
+        for key in MODES:
+            self.actions[key] = self._mode_action(self.menu, key)
+        self.min_menu = self.menu.addMenu("")
         for pct in MINIMUM:
-            key = f"min:{pct}"
-            self.actions[key] = self._mode_action(sub, key, f"{pct}%")
-        sub = self.menu.addMenu("Velocidade fixa")
+            self.actions[f"min:{pct}"] = self._mode_action(self.min_menu, f"min:{pct}", f"{pct}%")
+        self.fixed_menu = self.menu.addMenu("")
         for pct in FIXED:
-            key = f"fixed:{pct}"
-            self.actions[key] = self._mode_action(sub, key, f"{pct}%")
-
+            self.actions[f"fixed:{pct}"] = self._mode_action(self.fixed_menu, f"fixed:{pct}", f"{pct}%")
         self.menu.addSeparator()
-        sub = self.menu.addMenu("Unidade de temperatura")
-        unit_group = QActionGroup(sub)
-        self.unit_actions = {}
-        for u, label in (("C", "Celsius (°C)"), ("F", "Fahrenheit (°F)")):
-            a = QAction(label, sub, checkable=True)
-            a.setChecked(self.settings["unit"] == u)
-            a.triggered.connect(lambda _=False, u=u: self.set_unit(u))
-            unit_group.addAction(a)
-            sub.addAction(a)
-            self.unit_actions[u] = a
-        quit_act = self.menu.addAction("Fechar ícone")
-        quit_act.triggered.connect(app.quit)
 
+        # Preferências
+        self.unit_menu = self.menu.addMenu("")
+        self.unit_actions = self._choice_menu(
+            self.unit_menu, ["C", "F"], self.settings["unit"], self.set_unit)
+        self.lang_menu = self.menu.addMenu("")
+        self.lang_actions = self._choice_menu(
+            self.lang_menu, ["auto"] + [c for c, _ in pf.LANGS], self.settings["lang"], self.set_language)
+        self.menu.addSeparator()
+        self.quit_act = self.menu.addAction("")   # fecha só o ícone; o serviço continua
+        self.quit_act.triggered.connect(app.quit)
+
+        self.retranslate()
         self.tray.setContextMenu(self.menu)
         self.tray.activated.connect(self._on_click)
         self.tray.messageClicked.connect(self._on_message_click)
@@ -165,13 +166,42 @@ class Tray:
         self.timer.start(INTERVAL_ACTIVE)
         self.refresh()
 
-    def _mode_action(self, menu, key, label):
+    # ---------------------------------------------------------- construção do menu
+    def _mode_action(self, menu, key, label=""):
         a = QAction(label, menu, checkable=True)
         a.triggered.connect(lambda _=False, k=key: self.set_mode(k))
         self.group.addAction(a)
         menu.addAction(a)
         return a
 
+    def _choice_menu(self, menu, keys, current, callback):
+        group = QActionGroup(menu)
+        acts = {}
+        for k in keys:
+            a = QAction("", menu, checkable=True)
+            a.setChecked(k == current)
+            a.triggered.connect(lambda _=False, k=k: callback(k))
+            group.addAction(a)
+            menu.addAction(a)
+            acts[k] = a
+        return acts
+
+    def retranslate(self):
+        for key in MODES:
+            self.actions[key].setText(mode_label(key))
+        self.min_menu.setTitle(tr("menu_min"))
+        self.fixed_menu.setTitle(tr("menu_fixed"))
+        self.unit_menu.setTitle(tr("menu_unit"))
+        self.unit_actions["C"].setText(tr("celsius"))
+        self.unit_actions["F"].setText(tr("fahrenheit"))
+        self.lang_menu.setTitle(tr("menu_lang"))
+        self.lang_actions["auto"].setText(tr("lang_auto"))
+        for code, name in pf.LANGS:          # cada idioma no próprio idioma
+            self.lang_actions[code].setText(name)
+        self.quit_act.setText(tr("quit"))
+        self.quit_act.setToolTip(tr("quit_tip"))
+
+    # ---------------------------------------------------------- eventos
     def _on_click(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self.menu.popup(self.tray.geometry().center())
@@ -191,11 +221,9 @@ class Tray:
             self.warned, self.warn_mode = False, mode
         warn = self.cfg.get()["warn_temp"]
         if not self.warned and tmax >= warn:
-            pct = mode[6:]
             self.tray.showMessage(
-                "Notebook esquentando",
-                f"{pf.fmt_temp(tmax, self.settings['unit'])} com a ventoinha fixa em {pct}%.\n"
-                f"Clique aqui para usar mínimo de {pct}% (sobe se precisar).",
+                tr("warn_title"),
+                tr("warn_body", t=pf.fmt_temp(tmax, self.settings["unit"]), n=mode[6:]),
                 QSystemTrayIcon.MessageIcon.Warning,
                 10000,
             )
@@ -203,9 +231,17 @@ class Tray:
         elif self.warned and tmax < warn - 5:
             self.warned = False
 
+    # ---------------------------------------------------------- ações
     def set_unit(self, unit):
         self.settings = pf.save_settings(unit=unit)
         self.last_icon_temp, self.last_tip = object(), None
+        self.refresh()
+
+    def set_language(self, lang):
+        self.settings = pf.save_settings(lang=lang)
+        pf.set_lang(lang)
+        self.last_tip = None
+        self.retranslate()
         self.refresh()
 
     def update_mode_checks(self, mode=None, active=None):
@@ -222,11 +258,8 @@ class Tray:
             with open(pf.MODE_FILE, "w") as f:
                 f.write(mode)
         except OSError:
-            self.tray.showMessage(
-                "BenjaBreeze",
-                "Serviço não está rodando.\nsudo systemctl start benjabreeze",
-                QSystemTrayIcon.MessageIcon.Warning,
-            )
+            self.tray.showMessage("BenjaBreeze", tr("svc_not_running"),
+                                  QSystemTrayIcon.MessageIcon.Warning)
         self.refresh()
 
     def refresh(self):
@@ -240,18 +273,17 @@ class Tray:
                 except OSError:
                     fans.append(None)
         active = pf.service_running()
-        mode = pf.read_mode("?") if active else "serviço parado"
-        want = INTERVAL_AUTO if mode in ("auto", "serviço parado") else INTERVAL_ACTIVE
+        mode = pf.read_mode("?") if active else ""
+        want = INTERVAL_AUTO if mode in ("auto", "") else INTERVAL_ACTIVE
         if self.timer.interval() != want:
             self.timer.setInterval(want)
 
-        cpu = t.get("cpu_pkg")
         unit = self.settings["unit"]
         lines = [
-            f"CPU: {pf.fmt_temp(cpu, unit)}",
-            f"Máx. sensores: {pf.fmt_temp(tmax, unit)}",
-            "Ventoinhas: " + " / ".join(f"{r} RPM" if r is not None else "?" for r in fans),
-            f"Modo: {mode_label(mode)}",
+            tr("cpu", t=pf.fmt_temp(t.get("cpu_pkg"), unit)),
+            tr("max_sensors", t=pf.fmt_temp(tmax, unit)),
+            tr("fans", v=" / ".join(f"{r} RPM" if r is not None else "?" for r in fans)),
+            tr("mode", m=mode_label(mode) if active else tr("service_stopped")),
         ]
         self.check_warning(mode, tmax)
         for a, txt in zip(self.info, lines):
