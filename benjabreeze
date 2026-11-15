@@ -24,10 +24,11 @@ import signal
 import sys
 import time
 
-VERSION = "0.9.0"
+VERSION = "0.10.0"
 CONF = "/etc/benjabreeze.json"
 RUN_DIR = "/run/benjabreeze"          # tmpfs (RAM): nada é gravado em disco
 MODE_FILE = RUN_DIR + "/mode"
+STATE_FILE = "/var/lib/benjabreeze/mode"  # último modo escolhido (gravado só quando muda)
 DEFAULT_CONF = {
     "interval": 2.0,
     "hysteresis": 4,          # °C que a temperatura precisa cair antes de reduzir
@@ -300,11 +301,27 @@ def daemon():
 
     cfg = Config()
     conf = cfg.get()
+    # Retoma o último modo escolhido (persistido entre desligamentos e reinícios)
+    try:
+        with open(STATE_FILE) as f:
+            saved_mode = f.read().strip()
+    except OSError:
+        saved_mode = None
     os.makedirs(RUN_DIR, exist_ok=True)
     if not os.path.exists(MODE_FILE):
+        start = saved_mode if saved_mode and valid_mode(saved_mode, conf) else conf["default_mode"]
         with open(MODE_FILE, "w") as f:
-            f.write(conf["default_mode"])
+            f.write(start)
     os.chmod(MODE_FILE, 0o666)  # permite trocar modo sem sudo (valor é validado)
+
+    def save_state(m):
+        try:
+            os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+            with open(STATE_FILE + ".tmp", "w") as f:
+                f.write(m)
+            os.replace(STATE_FILE + ".tmp", STATE_FILE)
+        except OSError as e:
+            print(f"não consegui salvar o modo: {e}", file=sys.stderr)
 
     last_mode, cur_pct, st, warned = None, None, {}, False
     try:
@@ -313,6 +330,9 @@ def daemon():
             mode = read_mode(conf["default_mode"])
             if not valid_mode(mode, conf):
                 mode = conf["default_mode"]
+            if mode != saved_mode:
+                save_state(mode)
+                saved_mode = mode
 
             if mode == "auto":
                 # Firmware no controle: não lê sensores nem escreve nada,

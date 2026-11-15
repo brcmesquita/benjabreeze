@@ -3,6 +3,18 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.10.0] — 2026-11-15
+
+### Adicionado
+- Ícone: **Desligar BenjaBreeze** para o serviço e devolve as ventoinhas ao firmware da
+  Acer (pede a senha pela janela do KDE), com uma notificação do sistema confirmando.
+- O último modo escolhido é lembrado (`/var/lib/benjabreeze/mode`): depois de desligar
+  ou reiniciar, o BenjaBreeze volta de onde parou.
+- Abrir o app com o serviço desligado liga o serviço de novo.
+
+### Alterado
+- "Fechar" passa a ser **Ocultar ícone** (esconde só o ícone; o serviço continua).
+
 ## [0.9.0] — 2026-11-15
 
 ### Adicionado
@@ -99,6 +111,7 @@ Primeira versão pública — só terminal (nome original: `predator-fan`).
 - Proteção: 100 % acima de 92 °C; controle volta ao firmware se o serviço parar.
 - `install.sh` / `uninstall.sh`.
 
+[0.10.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.6.1...v0.7.0

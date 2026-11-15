@@ -77,12 +77,17 @@ tradicional e chinês simplificado. Por padrão segue o idioma do sistema; troqu
 "Idioma" no menu do ícone ou com `benjabreeze lang`. As traduções ficam em
 [`i18n.json`](i18n.json) — correções de falantes nativos são muito bem-vindas.
 
-**Fechar:** fecha só o ícone. O serviço continua rodando e as ventoinhas ficam no modo
-escolhido. Para abrir o ícone de novo, procure "BenjaBreeze" no menu de aplicativos. Para
-desligar o BenjaBreeze de vez (o firmware da Acer volta a controlar), use
-`sudo systemctl stop benjabreeze`.
+**Ocultar ou desligar:**
+- **Ocultar ícone** — esconde só o ícone. O BenjaBreeze continua controlando as
+  ventoinhas. Para mostrar de novo, abra "BenjaBreeze" no menu de aplicativos.
+- **Desligar BenjaBreeze** — para o serviço e devolve as ventoinhas ao firmware da Acer
+  (o KDE pede a sua senha). Uma notificação confirma. O BenjaBreeze volta **de onde
+  parou** quando você reiniciar o computador ou abrir o app de novo.
+  Pelo terminal: `sudo systemctl stop benjabreeze` / `sudo systemctl start benjabreeze`.
 
-O modo volta ao `default_mode` a cada boot.
+O modo escolhido é lembrado: depois de desligar ou reiniciar, o BenjaBreeze volta no mesmo
+modo. Ele fica salvo em `/var/lib/benjabreeze/mode` (gravado só quando você troca de modo).
+Na primeira vez, o modo é o `default_mode` da configuração (`auto`).
 
 ### Entendendo os modos
 
@@ -127,8 +132,9 @@ meteorológicos e câmeras térmicas — do azul gelo ao vermelho vulcão:
 
 ## Consumo de recursos e privacidade
 
-- **Nada é gravado em disco** além das suas preferências (`~/.config/benjabreeze/settings.json`,
-  poucos bytes, só quando você muda algo). Sem logs, sem histórico, sem cache. O único arquivo de
+- **Nada é gravado em disco** além das suas preferências (`~/.config/benjabreeze/settings.json`)
+  e do último modo escolhido (`/var/lib/benjabreeze/mode`) — poucos bytes, gravados só
+  quando você muda algo. Sem logs, sem histórico, sem cache. O único arquivo de
   estado é `/run/benjabreeze/mode` (alguns bytes, em RAM), apagado quando o serviço para.
 - **Nada sai do seu computador.** Não há rede, telemetria ou coleta de dados.
 - **O que é lido:** a cada 2 s, poucos arquivos virtuais do kernel (`/sys`) com

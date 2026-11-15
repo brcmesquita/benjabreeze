@@ -10,6 +10,8 @@ ExecStopPost=/bin/sh -c 'for f in /sys/class/hwmon/hwmon*/pwm*_enable; do grep -
 RuntimeDirectory=benjabreeze
 RuntimeDirectoryMode=0755
 RuntimeDirectoryPreserve=restart
+# /var/lib/benjabreeze guarda o último modo escolhido
+StateDirectory=benjabreeze
 Restart=on-failure
 RestartSec=3
 Nice=10

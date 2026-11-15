@@ -32,11 +32,17 @@
     "lang_auto": "Automático (sistema)",
     "celsius": "Celsius (°C)",
     "fahrenheit": "Fahrenheit (°F)",
-    "quit": "Fechar",
     "svc_not_running": "Serviço não está rodando.\nsudo systemctl start benjabreeze",
     "warn_title": "Notebook esquentando",
     "warn_body": "{t} com a ventoinha fixa em {n}%.\nClique aqui para usar mínimo de {n}% (sobe se precisar).",
-    "quit_tip": "Fecha só o ícone. O serviço continua controlando as ventoinhas."
+    "hide": "Ocultar ícone",
+    "hide_tip": "Esconde o ícone. O BenjaBreeze continua controlando as ventoinhas; para mostrar de novo, abra BenjaBreeze no menu de aplicativos.",
+    "power_off": "Desligar BenjaBreeze",
+    "power_off_tip": "Para o serviço e devolve as ventoinhas ao firmware da Acer até você reiniciar ou abrir o BenjaBreeze de novo. Pede a senha.",
+    "power_on": "Ligar BenjaBreeze",
+    "power_fail": "Não foi possível alterar o serviço (senha cancelada?).",
+    "off_title": "BenjaBreeze desligado",
+    "off_body": "As ventoinhas voltaram ao controle do firmware da Acer. O BenjaBreeze volta de onde parou quando você reiniciar o computador ou abrir o app de novo."
   },
   "en_US": {
     "temps": "Temperatures",
@@ -71,11 +77,17 @@
     "lang_auto": "Automatic (system)",
     "celsius": "Celsius (°C)",
     "fahrenheit": "Fahrenheit (°F)",
-    "quit": "Close",
     "svc_not_running": "The service is not running.\nsudo systemctl start benjabreeze",
     "warn_title": "Laptop heating up",
     "warn_body": "{t} with the fan fixed at {n}%.\nClick here to use a {n}% minimum (rises when needed).",
-    "quit_tip": "Closes only the icon. The service keeps controlling the fans."
+    "hide": "Hide icon",
+    "hide_tip": "Hides the icon. BenjaBreeze keeps controlling the fans; to show it again, open BenjaBreeze from the application menu.",
+    "power_off": "Turn off BenjaBreeze",
+    "power_off_tip": "Stops the service and hands the fans back to the Acer firmware until you restart or open BenjaBreeze again. Asks for your password.",
+    "power_on": "Turn on BenjaBreeze",
+    "power_fail": "Could not change the service (password cancelled?).",
+    "off_title": "BenjaBreeze turned off",
+    "off_body": "The fans are back under Acer firmware control. BenjaBreeze will resume where it left off when you restart the computer or open the app again."
   },
   "es": {
     "temps": "Temperaturas",
@@ -110,11 +122,17 @@
     "lang_auto": "Automático (sistema)",
     "celsius": "Celsius (°C)",
     "fahrenheit": "Fahrenheit (°F)",
-    "quit": "Cerrar",
     "svc_not_running": "El servicio no está en ejecución.\nsudo systemctl start benjabreeze",
     "warn_title": "El portátil se está calentando",
     "warn_body": "{t} con el ventilador fijo en {n}%.\nHaz clic aquí para usar un mínimo de {n}% (sube si hace falta).",
-    "quit_tip": "Cierra solo el icono. El servicio sigue controlando los ventiladores."
+    "hide": "Ocultar icono",
+    "hide_tip": "Oculta el icono. BenjaBreeze sigue controlando los ventiladores; para mostrarlo de nuevo, abre BenjaBreeze desde el menú de aplicaciones.",
+    "power_off": "Apagar BenjaBreeze",
+    "power_off_tip": "Detiene el servicio y devuelve los ventiladores al firmware de Acer hasta que reinicies o abras BenjaBreeze de nuevo. Pide la contraseña.",
+    "power_on": "Encender BenjaBreeze",
+    "power_fail": "No se pudo cambiar el servicio (¿contraseña cancelada?).",
+    "off_title": "BenjaBreeze apagado",
+    "off_body": "Los ventiladores volvieron al control del firmware de Acer. BenjaBreeze continuará donde lo dejó cuando reinicies el equipo o abras la app de nuevo."
   },
   "de": {
     "temps": "Temperaturen",
@@ -149,11 +167,17 @@
     "lang_auto": "Automatisch (System)",
     "celsius": "Celsius (°C)",
     "fahrenheit": "Fahrenheit (°F)",
-    "quit": "Schließen",
     "svc_not_running": "Der Dienst läuft nicht.\nsudo systemctl start benjabreeze",
     "warn_title": "Notebook wird heiß",
     "warn_body": "{t} bei fester Lüfterdrehzahl von {n} %.\nHier klicken, um {n} % als Minimum zu verwenden (steigt bei Bedarf).",
-    "quit_tip": "Schließt nur das Symbol. Der Dienst steuert die Lüfter weiter."
+    "hide": "Symbol ausblenden",
+    "hide_tip": "Blendet das Symbol aus. BenjaBreeze steuert die Lüfter weiter; zum erneuten Anzeigen BenjaBreeze im Anwendungsmenü öffnen.",
+    "power_off": "BenjaBreeze ausschalten",
+    "power_off_tip": "Stoppt den Dienst und gibt die Lüfter an die Acer-Firmware zurück, bis du neu startest oder BenjaBreeze erneut öffnest. Fragt nach dem Passwort.",
+    "power_on": "BenjaBreeze einschalten",
+    "power_fail": "Der Dienst konnte nicht geändert werden (Passwort abgebrochen?).",
+    "off_title": "BenjaBreeze ausgeschaltet",
+    "off_body": "Die Lüfter werden wieder von der Acer-Firmware gesteuert. BenjaBreeze macht dort weiter, wo es aufgehört hat, wenn du den Computer neu startest oder die App erneut öffnest."
   },
   "fr": {
     "temps": "Températures",
@@ -188,11 +212,17 @@
     "lang_auto": "Automatique (système)",
     "celsius": "Celsius (°C)",
     "fahrenheit": "Fahrenheit (°F)",
-    "quit": "Fermer",
     "svc_not_running": "Le service n'est pas en cours d'exécution.\nsudo systemctl start benjabreeze",
     "warn_title": "L'ordinateur chauffe",
     "warn_body": "{t} avec le ventilateur fixé à {n} %.\nCliquez ici pour utiliser un minimum de {n} % (augmente si nécessaire).",
-    "quit_tip": "Ferme seulement l'icône. Le service continue de contrôler les ventilateurs."
+    "hide": "Masquer l'icône",
+    "hide_tip": "Masque l'icône. BenjaBreeze continue de contrôler les ventilateurs ; pour la réafficher, ouvrez BenjaBreeze depuis le menu des applications.",
+    "power_off": "Désactiver BenjaBreeze",
+    "power_off_tip": "Arrête le service et rend les ventilateurs au firmware Acer jusqu'au redémarrage ou à la réouverture de BenjaBreeze. Demande le mot de passe.",
+    "power_on": "Activer BenjaBreeze",
+    "power_fail": "Impossible de modifier le service (mot de passe annulé ?).",
+    "off_title": "BenjaBreeze désactivé",
+    "off_body": "Les ventilateurs sont de nouveau contrôlés par le firmware Acer. BenjaBreeze reprendra là où il s'était arrêté au redémarrage de l'ordinateur ou à la réouverture de l'application."
   },
   "ru": {
     "temps": "Температуры",
@@ -227,11 +257,17 @@
     "lang_auto": "Автоматически (системный)",
     "celsius": "Цельсий (°C)",
     "fahrenheit": "Фаренгейт (°F)",
-    "quit": "Закрыть",
     "svc_not_running": "Служба не запущена.\nsudo systemctl start benjabreeze",
     "warn_title": "Ноутбук нагревается",
     "warn_body": "{t} при фиксированной скорости вентилятора {n}%.\nНажмите здесь, чтобы задать минимум {n}% (повышается при необходимости).",
-    "quit_tip": "Закрывает только значок. Служба продолжает управлять вентиляторами."
+    "hide": "Скрыть значок",
+    "hide_tip": "Скрывает значок. BenjaBreeze продолжает управлять вентиляторами; чтобы снова показать его, откройте BenjaBreeze в меню приложений.",
+    "power_off": "Выключить BenjaBreeze",
+    "power_off_tip": "Останавливает службу и возвращает вентиляторы прошивке Acer до перезагрузки или повторного запуска BenjaBreeze. Запрашивает пароль.",
+    "power_on": "Включить BenjaBreeze",
+    "power_fail": "Не удалось изменить службу (ввод пароля отменён?).",
+    "off_title": "BenjaBreeze выключен",
+    "off_body": "Вентиляторы снова под управлением прошивки Acer. BenjaBreeze продолжит с того же места после перезагрузки компьютера или повторного запуска приложения."
   },
   "ja": {
     "temps": "温度",
@@ -266,11 +302,17 @@
     "lang_auto": "自動 (システム)",
     "celsius": "摂氏 (°C)",
     "fahrenheit": "華氏 (°F)",
-    "quit": "閉じる",
     "svc_not_running": "サービスが実行されていません。\nsudo systemctl start benjabreeze",
     "warn_title": "ノートPCが高温になっています",
     "warn_body": "ファンが {n}% に固定されたまま {t} です。\nここをクリックすると最低 {n}% に切り替えます (必要に応じて上昇)。",
-    "quit_tip": "アイコンだけを閉じます。サービスは引き続きファンを制御します。"
+    "hide": "アイコンを隠す",
+    "hide_tip": "アイコンを隠します。BenjaBreeze は引き続きファンを制御します。再表示するにはアプリケーションメニューから BenjaBreeze を開いてください。",
+    "power_off": "BenjaBreeze をオフにする",
+    "power_off_tip": "サービスを停止し、再起動するか BenjaBreeze を再度開くまでファンを Acer ファームウェアに戻します。パスワードが必要です。",
+    "power_on": "BenjaBreeze をオンにする",
+    "power_fail": "サービスを変更できませんでした (パスワード入力がキャンセルされた可能性があります)。",
+    "off_title": "BenjaBreeze をオフにしました",
+    "off_body": "ファンは Acer ファームウェアの制御に戻りました。コンピューターを再起動するかアプリを再度開くと、BenjaBreeze は前回の状態から再開します。"
   },
   "ko": {
     "temps": "온도",
@@ -305,11 +347,17 @@
     "lang_auto": "자동 (시스템)",
     "celsius": "섭씨 (°C)",
     "fahrenheit": "화씨 (°F)",
-    "quit": "닫기",
     "svc_not_running": "서비스가 실행되고 있지 않습니다.\nsudo systemctl start benjabreeze",
     "warn_title": "노트북 온도 상승",
     "warn_body": "팬이 {n}%로 고정된 상태에서 {t}입니다.\n여기를 클릭하면 최소 {n}%로 전환합니다 (필요하면 올라감).",
-    "quit_tip": "아이콘만 닫습니다. 서비스는 계속 팬을 제어합니다."
+    "hide": "아이콘 숨기기",
+    "hide_tip": "아이콘을 숨깁니다. BenjaBreeze는 계속 팬을 제어합니다. 다시 표시하려면 애플리케이션 메뉴에서 BenjaBreeze를 여세요.",
+    "power_off": "BenjaBreeze 끄기",
+    "power_off_tip": "서비스를 중지하고, 다시 시작하거나 BenjaBreeze를 다시 열 때까지 팬 제어를 Acer 펌웨어로 되돌립니다. 비밀번호가 필요합니다.",
+    "power_on": "BenjaBreeze 켜기",
+    "power_fail": "서비스를 변경할 수 없습니다 (비밀번호 입력이 취소되었나요?).",
+    "off_title": "BenjaBreeze 꺼짐",
+    "off_body": "팬 제어가 Acer 펌웨어로 돌아갔습니다. 컴퓨터를 다시 시작하거나 앱을 다시 열면 BenjaBreeze가 이전 상태로 다시 시작됩니다."
   },
   "zh_TW": {
     "temps": "溫度",
@@ -344,11 +392,17 @@
     "lang_auto": "自動 (系統)",
     "celsius": "攝氏 (°C)",
     "fahrenheit": "華氏 (°F)",
-    "quit": "關閉",
     "svc_not_running": "服務未執行。\nsudo systemctl start benjabreeze",
     "warn_title": "筆電溫度升高",
     "warn_body": "風扇固定在 {n}% 時溫度達到 {t}。\n按這裡改用最低 {n}%（需要時會提高）。",
-    "quit_tip": "只關閉圖示，服務會繼續控制風扇。"
+    "hide": "隱藏圖示",
+    "hide_tip": "隱藏圖示。BenjaBreeze 會繼續控制風扇；要再次顯示，請從應用程式選單開啟 BenjaBreeze。",
+    "power_off": "停用 BenjaBreeze",
+    "power_off_tip": "停止服務，在重新開機或再次開啟 BenjaBreeze 之前，將風扇交還給 Acer 韌體。需要輸入密碼。",
+    "power_on": "啟用 BenjaBreeze",
+    "power_fail": "無法變更服務（是否取消了密碼輸入？）。",
+    "off_title": "BenjaBreeze 已停用",
+    "off_body": "風扇已交還 Acer 韌體控制。重新開機或再次開啟應用程式時，BenjaBreeze 會從上次的狀態繼續。"
   },
   "zh_CN": {
     "temps": "温度",
@@ -383,10 +437,16 @@
     "lang_auto": "自动 (系统)",
     "celsius": "摄氏 (°C)",
     "fahrenheit": "华氏 (°F)",
-    "quit": "关闭",
     "svc_not_running": "服务未运行。\nsudo systemctl start benjabreeze",
     "warn_title": "笔记本温度升高",
     "warn_body": "风扇固定在 {n}% 时温度达到 {t}。\n点击这里改用最低 {n}%（需要时会提高）。",
-    "quit_tip": "只关闭图标，服务会继续控制风扇。"
+    "hide": "隐藏图标",
+    "hide_tip": "隐藏图标。BenjaBreeze 会继续控制风扇；要再次显示，请从应用程序菜单打开 BenjaBreeze。",
+    "power_off": "停用 BenjaBreeze",
+    "power_off_tip": "停止服务，在重启或再次打开 BenjaBreeze 之前，将风扇交还给 Acer 固件。需要输入密码。",
+    "power_on": "启用 BenjaBreeze",
+    "power_fail": "无法更改服务（是否取消了密码输入？）。",
+    "off_title": "BenjaBreeze 已停用",
+    "off_body": "风扇已交还 Acer 固件控制。重启电脑或再次打开应用时，BenjaBreeze 会从上次的状态继续。"
   }
 }

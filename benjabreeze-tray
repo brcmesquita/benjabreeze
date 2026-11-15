@@ -8,9 +8,11 @@ não para o serviço: as ventoinhas continuam no modo escolhido.
 import importlib.machinery
 import importlib.util
 import os
+import shutil
+import subprocess
 import sys
 
-from PyQt6.QtCore import QTimer, Qt, QRectF
+from PyQt6.QtCore import QProcess, QTimer, Qt, QRectF
 from PyQt6.QtGui import QAction, QActionGroup, QColor, QFont, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
@@ -151,8 +153,11 @@ class Tray:
         self.lang_actions = self._choice_menu(
             self.lang_menu, ["auto"] + [c for c, _ in pf.LANGS], self.settings["lang"], self.set_language)
         self.menu.addSeparator()
-        self.quit_act = self.menu.addAction("")   # fecha só o ícone; o serviço continua
-        self.quit_act.triggered.connect(app.quit)
+        self.hide_act = self.menu.addAction("")   # esconde só o ícone; o serviço continua
+        self.hide_act.triggered.connect(app.quit)
+        self.power_act = self.menu.addAction("")  # desliga/liga o serviço (pede senha)
+        self.power_act.triggered.connect(self.toggle_service)
+        self.proc = None
 
         self.retranslate()
         self.tray.setContextMenu(self.menu)
@@ -165,6 +170,7 @@ class Tray:
         self.timer.timeout.connect(self.refresh)
         self.timer.start(INTERVAL_ACTIVE)
         self.refresh()
+        QTimer.singleShot(0, self.start_if_stopped)
 
     # ---------------------------------------------------------- construção do menu
     def _mode_action(self, menu, key, label=""):
@@ -198,8 +204,9 @@ class Tray:
         self.lang_actions["auto"].setText(tr("lang_auto"))
         for code, name in pf.LANGS:          # cada idioma no próprio idioma
             self.lang_actions[code].setText(name)
-        self.quit_act.setText(tr("quit"))
-        self.quit_act.setToolTip(tr("quit_tip"))
+        self.hide_act.setText(tr("hide"))
+        self.hide_act.setToolTip(tr("hide_tip"))
+        self.update_power_action()
 
     # ---------------------------------------------------------- eventos
     def _on_click(self, reason):
@@ -232,6 +239,59 @@ class Tray:
             self.warned = False
 
     # ---------------------------------------------------------- ações
+    def update_power_action(self, active=None):
+        if active is None:
+            active = pf.service_running()
+        self.power_act.setText(tr("power_off") if active else tr("power_on"))
+        self.power_act.setToolTip(tr("power_off_tip") if active else "")
+
+    def start_if_stopped(self):
+        """Abrir o app depois de "Desligar" liga o serviço de novo (de onde parou).
+
+        Só se o serviço estiver habilitado no boot — se alguém o desabilitou de
+        propósito, não insiste (nem pede senha a cada login).
+        """
+        if pf.service_running():
+            return
+        enabled = subprocess.run(["systemctl", "is-enabled", "--quiet", "benjabreeze"]).returncode == 0
+        if enabled:
+            self.toggle_service()
+
+    def toggle_service(self):
+        """Desliga (volta ao firmware e fecha o ícone) ou liga o serviço.
+
+        Usa systemctl, que pede a senha pela janela do KDE (polkit).
+        """
+        if self.proc is not None:
+            return
+        stopping = pf.service_running()
+        self.proc = QProcess()
+        self.proc.finished.connect(lambda code, _st: self._service_done(stopping, code))
+        self.proc.start("systemctl", ["stop" if stopping else "start", "benjabreeze"])
+
+    def _service_done(self, stopping, code):
+        self.proc = None
+        if code != 0:                      # senha cancelada ou erro
+            self.tray.showMessage("BenjaBreeze", tr("power_fail"),
+                                  QSystemTrayIcon.MessageIcon.Warning)
+            self.update_power_action()
+            return
+        if stopping:
+            self.notify(tr("off_title"), tr("off_body"))
+        else:
+            self.last_tip = None
+            self.refresh()
+
+    def notify(self, title, body):
+        """Notificação do sistema que continua visível depois que o ícone fecha."""
+        if shutil.which("notify-send"):
+            QProcess.startDetached("notify-send", ["-a", "BenjaBreeze", "-i", "temperature-normal",
+                                                   title, body])
+            self.app.quit()
+        else:
+            self.tray.showMessage(title, body, QSystemTrayIcon.MessageIcon.Information, 8000)
+            QTimer.singleShot(8000, self.app.quit)
+
     def set_unit(self, unit):
         self.settings = pf.save_settings(unit=unit)
         self.last_icon_temp, self.last_tip = object(), None
@@ -289,6 +349,7 @@ class Tray:
         for a, txt in zip(self.info, lines):
             a.setText(txt)
         self.update_mode_checks(mode, active)
+        self.update_power_action(active)
 
         # Só redesenha/atualiza quando algo visível mudou
         icon_temp = None if tmax is None else round(tmax)
