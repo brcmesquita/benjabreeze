@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=Predator Fan
+Name=BenjaBreeze
 Comment=Controle de ventoinhas Acer Predator
-Exec=/usr/local/bin/predator-fan-tray
+Exec=/usr/local/bin/benjabreeze-tray
 Icon=temperature-normal
 Terminal=false
 Categories=System;Monitor;

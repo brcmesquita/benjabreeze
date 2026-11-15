@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""predator-fan-tray — ícone na bandeja para o predator-fan (PyQt6).
+"""benjabreeze-tray — ícone na bandeja do BenjaBreeze (PyQt6).
 
 Mostra a temperatura no ícone e permite trocar o modo das ventoinhas
-pelo menu. Depende do serviço predator-fan estar rodando.
+pelo menu. Depende do serviço benjabreeze estar rodando.
 """
 import importlib.machinery
 import importlib.util
@@ -15,15 +15,15 @@ from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
 # Reaproveita as funções do script principal (mesma pasta ou /usr/local/bin)
 _here = os.path.dirname(os.path.realpath(__file__))
-for _p in (os.path.join(_here, "predator-fan"), "/usr/local/bin/predator-fan"):
+for _p in (os.path.join(_here, "benjabreeze"), "/usr/local/bin/benjabreeze"):
     if os.path.exists(_p):
-        _loader = importlib.machinery.SourceFileLoader("predator_fan", _p)
-        _spec = importlib.util.spec_from_loader("predator_fan", _loader)
+        _loader = importlib.machinery.SourceFileLoader("benjabreeze", _p)
+        _spec = importlib.util.spec_from_loader("benjabreeze", _loader)
         pf = importlib.util.module_from_spec(_spec)
         _loader.exec_module(pf)
         break
 else:
-    sys.exit("predator-fan não encontrado")
+    sys.exit("benjabreeze não encontrado")
 
 MODES = [
     ("auto", "Automático (firmware Acer)"),
@@ -65,7 +65,7 @@ def make_icon(t):
 
 
 def service_active():
-    return os.system("systemctl is-active --quiet predator-fan") == 0
+    return os.system("systemctl is-active --quiet benjabreeze") == 0
 
 
 class Tray:
@@ -119,8 +119,8 @@ class Tray:
                 f.write(mode)
         except OSError:
             self.tray.showMessage(
-                "predator-fan",
-                "Serviço não está rodando.\nsudo systemctl start predator-fan",
+                "BenjaBreeze",
+                "Serviço não está rodando.\nsudo systemctl start benjabreeze",
                 QSystemTrayIcon.MessageIcon.Warning,
             )
         self.refresh()
@@ -153,13 +153,13 @@ class Tray:
             a.setEnabled(active)
 
         self.tray.setIcon(make_icon(tmax))
-        self.tray.setToolTip("predator-fan\n" + "\n".join(lines))
+        self.tray.setToolTip("BenjaBreeze\n" + "\n".join(lines))
 
 
 def main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
-    app.setApplicationName("predator-fan-tray")
+    app.setApplicationName("benjabreeze-tray")
     if not QSystemTrayIcon.isSystemTrayAvailable():
         sys.exit("bandeja do sistema não disponível")
     _t = Tray(app)  # noqa: F841 (mantém referência viva)

@@ -1,10 +1,13 @@
-# predator-fan
+# BenjaBreeze
 
 Controle de ventoinhas para notebooks **Acer Predator** no Linux, usando apenas o driver
 `acer_wmi` que já vem no kernel — **sem módulo de kernel extra, sem compilar nada**.
 
 *Fan control for Acer Predator laptops on Linux using only the in-kernel `acer_wmi`
 hwmon interface (no out-of-tree modules). Simple daemon + CLI + KDE/Qt tray icon.*
+
+> Projeto independente, sem afiliação com a Acer. *Acer* e *Predator* são marcas
+> da Acer Inc., citadas apenas para indicar compatibilidade.
 
 ## Recursos
 
@@ -33,8 +36,8 @@ Outros modelos com a mesma interface devem funcionar — relatos são bem-vindos
 ## Instalação
 
 ```sh
-git clone https://github.com/brcmesquita/predator-fan.git
-cd predator-fan
+git clone https://github.com/brcmesquita/benjabreeze.git
+cd benjabreeze
 sudo sh install.sh
 ```
 
@@ -44,21 +47,21 @@ O padrão após instalar é `auto`: nada muda até você escolher outro modo.
 
 | Comando | Efeito |
 |---|---|
-| `predator-fan status` | temperaturas, RPM e modo |
-| `predator-fan watch` | status atualizando a cada segundo |
-| `predator-fan auto` | controle do firmware Acer |
-| `predator-fan curve` | curva normal |
-| `predator-fan silent` | curva silenciosa |
-| `predator-fan max` | 100 % |
-| `predator-fan set 60` | fixo em 60 % (proteção de 92 °C continua ativa) |
+| `benjabreeze status` | temperaturas, RPM e modo |
+| `benjabreeze watch` | status atualizando a cada segundo |
+| `benjabreeze auto` | controle do firmware Acer |
+| `benjabreeze curve` | curva normal |
+| `benjabreeze silent` | curva silenciosa |
+| `benjabreeze max` | 100 % |
+| `benjabreeze set 60` | fixo em 60 % (proteção de 92 °C continua ativa) |
 
-Ícone na bandeja: `predator-fan-tray` (ou "Predator Fan" no menu; inicia no login).
+Ícone na bandeja: `benjabreeze-tray` (ou "BenjaBreeze" no menu; inicia no login).
 
 O modo volta ao `default_mode` a cada boot.
 
 ## Configuração
 
-`/etc/predator-fan.json` (recarregado automaticamente):
+`/etc/benjabreeze.json` (recarregado automaticamente):
 
 ```json
 {
@@ -74,7 +77,7 @@ O modo volta ao `default_mode` a cada boot.
 ```
 
 Cada ponto é `[temperatura °C, velocidade %]`. Você pode criar curvas novas e usá-las
-com `predator-fan <nome>`. A temperatura usada é a maior entre os sensores do `acer_wmi`
+com `benjabreeze <nome>`. A temperatura usada é a maior entre os sensores do `acer_wmi`
 e o pacote da CPU (`coretemp`).
 
 ## Desinstalar

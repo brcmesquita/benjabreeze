@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-"""predator-fan — controle de ventoinhas para Acer Predator (driver acer_wmi hwmon).
+"""BenjaBreeze — controle de ventoinhas para notebooks Acer Predator (driver acer_wmi hwmon).
 
 Uso:
-  predator-fan status            mostra temperaturas, RPM e modo
-  predator-fan auto              devolve o controle ao firmware (padrão Acer)
-  predator-fan curve             usa a curva normal do arquivo de config
-  predator-fan silent            usa a curva silenciosa
-  predator-fan max               100% nas duas ventoinhas
-  predator-fan set <0-100>       velocidade fixa (%)
-  predator-fan watch             status atualizando a cada segundo
-  predator-fan daemon            (usado pelo systemd)
+  benjabreeze status            mostra temperaturas, RPM e modo
+  benjabreeze auto              devolve o controle ao firmware (padrão Acer)
+  benjabreeze curve             usa a curva normal do arquivo de config
+  benjabreeze silent            usa a curva silenciosa
+  benjabreeze max               100% nas duas ventoinhas
+  benjabreeze set <0-100>       velocidade fixa (%)
+  benjabreeze watch             status atualizando a cada segundo
+  benjabreeze daemon            (usado pelo systemd)
 """
 import json, os, signal, sys, time, glob
 
-CONF = "/etc/predator-fan.json"
-MODE_FILE = "/run/predator-fan/mode"
+CONF = "/etc/benjabreeze.json"
+MODE_FILE = "/run/benjabreeze/mode"
 DEFAULT_CONF = {
     "interval": 2.0,
     "hysteresis": 4,          # °C que a temperatura precisa cair antes de reduzir
@@ -199,7 +199,7 @@ def status():
                       f"pwm={pwm * 100 // 255:3d}%  {'manual' if en == 1 else 'firmware'}")
             except OSError:
                 pass
-    active = os.system("systemctl is-active --quiet predator-fan") == 0
+    active = os.system("systemctl is-active --quiet benjabreeze") == 0
     print(f"Serviço: {'ativo' if active else 'parado'}   Modo: {read_mode('?')}")
 
 
@@ -212,7 +212,7 @@ def set_mode(m):
             f.write(m)
     except OSError:
         sys.exit("não consegui escrever o modo — o serviço está rodando? "
-                 "(sudo systemctl start predator-fan)")
+                 "(sudo systemctl start benjabreeze)")
     print(f"modo -> {m}")
 
 
