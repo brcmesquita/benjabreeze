@@ -1,0 +1,17 @@
+Package: benjabreeze
+Version: @VERSION@
+Section: utils
+Priority: optional
+Architecture: all
+Depends: python3 (>= 3.10), systemd
+Recommends: python3-pyqt6, libnotify-bin
+Maintainer: Bruno Raphael Cabral de Mesquita <brcmesquita@gmail.com>
+Homepage: https://github.com/brcmesquita/benjabreeze
+Description: Controle de ventoinhas para notebooks Acer Predator
+ BenjaBreeze controla as ventoinhas de notebooks Acer Predator no Linux usando
+ apenas o driver acer_wmi do kernel (interface hwmon), sem módulo extra.
+ Inclui um serviço (systemd), o comando "benjabreeze" e um ícone na bandeja
+ (PyQt6) com a temperatura e os modos.
+ .
+ Projeto independente, sem afiliação com a Acer. Acer e Predator são marcas
+ da Acer Inc., citadas apenas para indicar compatibilidade.

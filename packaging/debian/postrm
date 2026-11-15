@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+systemctl daemon-reload 2>/dev/null || true
+if [ "$1" = "purge" ]; then
+    rm -rf /var/lib/benjabreeze
+    rm -f /etc/benjabreeze.json
+fi
+exit 0

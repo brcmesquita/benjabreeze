@@ -17,9 +17,9 @@ from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 from PyQt6.QtGui import QAction, QActionGroup, QColor, QFont, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-# Reaproveita as funções do script principal (mesma pasta ou /usr/local/bin)
+# Reaproveita as funções do script principal (mesma pasta, pacote .deb ou install.sh)
 _here = os.path.dirname(os.path.realpath(__file__))
-for _p in (os.path.join(_here, "benjabreeze"), "/usr/local/bin/benjabreeze"):
+for _p in (os.path.join(_here, "benjabreeze"), "/usr/bin/benjabreeze", "/usr/local/bin/benjabreeze"):
     if os.path.exists(_p):
         _loader = importlib.machinery.SourceFileLoader("benjabreeze", _p)
         _spec = importlib.util.spec_from_loader("benjabreeze", _loader)

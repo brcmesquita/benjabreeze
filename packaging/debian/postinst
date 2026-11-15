@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+if [ "$1" = "configure" ]; then
+    systemctl daemon-reload || true
+    systemctl enable benjabreeze.service || true
+    systemctl restart benjabreeze.service || true
+fi
+exit 0

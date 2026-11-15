@@ -1,0 +1,8 @@
+#!/bin/sh
+# Ao remover: para o serviço (as ventoinhas voltam ao firmware da Acer).
+set -e
+if [ "$1" = "remove" ]; then
+    systemctl disable --now benjabreeze.service 2>/dev/null || true
+    pkill -f benjabreeze-tray 2>/dev/null || true
+fi
+exit 0

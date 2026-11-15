@@ -3,6 +3,17 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.12.0] — 2026-11-15
+
+### Adicionado
+- Pacote `.deb` nas releases (`sudo apt install ./benjabreeze_*_all.deb`), gerado por
+  `build-deb.sh`. Instala em `/usr/bin`, remove instalações manuais anteriores
+  (`install.sh` e o antigo `predator-fan`) e aproveita a configuração.
+- Página de ajuda para usuários: [docs/AJUDA.md](docs/AJUDA.md).
+- README: seção de compatibilidade com o ambiente testado (Kubuntu 26.04.1 LTS,
+  kernel 7.0.0-30, Plasma 6.6.6, Predator Helios Neo 16 PHN16-72, driver `acer_wmi`) e
+  aviso de uso por conta e risco fora dele.
+
 ## [0.11.0] — 2026-11-15
 
 ### Removido
@@ -130,6 +141,7 @@ Primeira versão pública — só terminal (nome original: `predator-fan`).
 - Proteção: 100 % acima de 92 °C; controle volta ao firmware se o serviço parar.
 - `install.sh` / `uninstall.sh`.
 
+[0.12.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/brcmesquita/benjabreeze/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.9.0...v0.10.0

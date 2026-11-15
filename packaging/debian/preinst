@@ -1,0 +1,26 @@
+#!/bin/sh
+# Antes da primeira instalação do pacote: remove instalações manuais (install.sh)
+# e o nome antigo (predator-fan), para não haver dois serviços brigando.
+set -e
+# $2 vazio = primeira instalação (não é reinstalação nem atualização do pacote)
+if [ "$1" = "install" ] && [ -z "$2" ]; then
+    for svc in benjabreeze predator-fan; do
+        if [ -f "/etc/systemd/system/$svc.service" ]; then
+            systemctl disable --now "$svc" 2>/dev/null || true
+            rm -f "/etc/systemd/system/$svc.service"
+        fi
+    done
+    pkill -f 'benjabreeze-tray|predator-fan-tray' 2>/dev/null || true
+    if [ -f /etc/predator-fan.json ] && [ ! -f /etc/benjabreeze.json ]; then
+        mv /etc/predator-fan.json /etc/benjabreeze.json
+    fi
+    rm -f /usr/local/bin/benjabreeze /usr/local/bin/benjabreeze-tray \
+          /usr/local/bin/predator-fan /usr/local/bin/predator-fan-tray \
+          /usr/share/applications/benjabreeze-tray.desktop \
+          /usr/share/applications/predator-fan-tray.desktop \
+          /etc/xdg/autostart/benjabreeze-tray.desktop \
+          /etc/xdg/autostart/predator-fan-tray.desktop
+    rm -rf /usr/local/share/benjabreeze
+    systemctl daemon-reload 2>/dev/null || true
+fi
+exit 0

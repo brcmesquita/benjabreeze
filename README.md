@@ -9,6 +9,8 @@ hwmon interface (no out-of-tree modules). Lightweight daemon + CLI + KDE/Qt tray
 > Projeto independente, sem afiliação com a Acer. *Acer* e *Predator* são marcas
 > da Acer Inc., citadas apenas para indicar compatibilidade.
 
+**Novo por aqui? Veja a [Ajuda: como usar o BenjaBreeze](docs/AJUDA.md).**
+
 ## Recursos
 
 - Modos: `auto` (firmware Acer), `max`, velocidade fixa (`set N`) e velocidade mínima
@@ -33,10 +35,39 @@ hwmon interface (no out-of-tree modules). Lightweight daemon + CLI + KDE/Qt tray
 - Python 3, systemd
 - Para o ícone: PyQt6 (`sudo apt install python3-pyqt6`)
 
-Testado em: **Predator Helios Neo 16 (PHN16-72)**, Kubuntu, kernel 7.0.
-Outros modelos com a mesma interface devem funcionar — [relatos são bem-vindos](#contribuindo).
+### Compatibilidade
+
+Até o momento, o BenjaBreeze foi testado **somente** neste ambiente:
+
+| | |
+|---|---|
+| Notebook | Acer Predator Helios Neo 16 (PHN16-72) |
+| Sistema | Kubuntu 26.04.1 LTS (Ubuntu 26.04) |
+| Kernel | 7.0.0-30-generic |
+| Área de trabalho | KDE Plasma 6.6.6 |
+| Driver | `acer_wmi` ("Acer Laptop WMI Extras Driver"), do próprio kernel, com controle de ventoinhas (`pwm1`/`pwm2` em `/sys/class/hwmon`) |
+
+Outras distribuições, kernels e modelos Acer com a mesma interface **podem** funcionar,
+mas não foram testados: o uso fora desse ambiente é **por sua conta e risco**.
+[Relatos de teste são bem-vindos](#contribuindo).
 
 ## Instalação
+
+### Opção 1 — pacote .deb (Ubuntu / Kubuntu, recomendado)
+
+Baixe o `.deb` da [última release](https://github.com/brcmesquita/benjabreeze/releases/latest)
+e instale:
+
+```sh
+sudo apt install ./benjabreeze_*_all.deb
+```
+
+O `apt` instala as dependências (Python 3 e PyQt6 para o ícone). Se você já tinha
+instalado pelo `install.sh` (ou o antigo `predator-fan`), o pacote remove a instalação
+manual e aproveita a sua configuração. **Atualizar:** instale o `.deb` da versão nova do
+mesmo jeito. **Remover:** `sudo apt remove benjabreeze`.
+
+### Opção 2 — a partir do código
 
 ```sh
 git clone https://github.com/brcmesquita/benjabreeze.git
@@ -44,10 +75,11 @@ cd benjabreeze
 sudo sh install.sh
 ```
 
-O padrão após instalar é `auto`: nada muda até você escolher outro modo.
+**Atualizar:** `git pull && sudo sh install.sh`. **Remover:** `sudo sh uninstall.sh`.
+Não misture as duas opções; para trocar, remova uma antes de instalar a outra.
 
-**Atualizar:** `git pull && sudo sh install.sh` (sua `/etc/benjabreeze.json` é mantida;
-o modo volta ao padrão).
+Na primeira instalação o modo é `auto`: nada muda até você escolher outro.
+Para gerar o `.deb` você mesmo: `sh build-deb.sh` (sai em `dist/`).
 
 ## Uso
 
@@ -201,7 +233,7 @@ Princípios:
 ### Outras ideias
 
 - Editor de curvas no ícone da bandeja
-- Pacotes `.deb` / AUR
+- Pacote AUR (Arch Linux)
 
 ## Contribuindo
 
@@ -213,14 +245,18 @@ Histórico de versões: [CHANGELOG.md](CHANGELOG.md).
 
 ## Desinstalar
 
-```sh
-sudo sh uninstall.sh
-```
+- Instalado pelo `.deb`: `sudo apt remove benjabreeze` (ou `purge` para apagar também a
+  configuração e o modo salvo).
+- Instalado pelo código: `sudo sh uninstall.sh`.
+
+Nos dois casos as ventoinhas voltam ao controle do firmware da Acer.
 
 ## Aviso
 
-Use por sua conta e risco. A proteção térmica do próprio hardware (throttling e
-desligamento) continua ativa, mas curvas muito baixas podem deixar o notebook quente.
+Use por sua conta e risco, principalmente fora do [ambiente testado](#compatibilidade).
+A proteção térmica do próprio hardware (throttling e desligamento) continua ativa, e o
+BenjaBreeze força 100 % a partir de 92 °C, mas velocidades fixas baixas sob carga
+pesada podem deixar o notebook quente.
 
 ## Licença
 

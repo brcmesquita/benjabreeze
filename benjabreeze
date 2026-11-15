@@ -22,7 +22,7 @@ import signal
 import sys
 import time
 
-VERSION = "0.11.0"
+VERSION = "0.12.0"
 CONF = "/etc/benjabreeze.json"
 RUN_DIR = "/run/benjabreeze"          # tmpfs (RAM): nada é gravado em disco
 MODE_FILE = RUN_DIR + "/mode"
@@ -185,7 +185,8 @@ def set_lang(setting):
 def _load_i18n():
     global _I18N
     here = os.path.dirname(os.path.realpath(__file__))
-    for path in (os.path.join(here, "i18n.json"), "/usr/local/share/benjabreeze/i18n.json"):
+    for path in (os.path.join(here, "i18n.json"), "/usr/share/benjabreeze/i18n.json",
+                 "/usr/local/share/benjabreeze/i18n.json"):
         try:
             with open(path, encoding="utf-8") as f:
                 _I18N = json.load(f)
