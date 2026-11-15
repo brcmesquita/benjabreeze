@@ -1,0 +1,13 @@
+[Unit]
+Description=Controle de ventoinhas Acer Predator
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/predator-fan daemon
+ExecStopPost=/bin/sh -c 'for f in /sys/class/hwmon/hwmon*/pwm*_enable; do grep -qx acer "$(dirname $f)/name" && echo 2 > "$f"; done; true'
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

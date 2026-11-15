@@ -1,0 +1,242 @@
+#!/usr/bin/env python3
+"""predator-fan — controle de ventoinhas para Acer Predator (driver acer_wmi hwmon).
+
+Uso:
+  predator-fan status            mostra temperaturas, RPM e modo
+  predator-fan auto              devolve o controle ao firmware (padrão Acer)
+  predator-fan curve             usa a curva normal do arquivo de config
+  predator-fan silent            usa a curva silenciosa
+  predator-fan max               100% nas duas ventoinhas
+  predator-fan set <0-100>       velocidade fixa (%)
+  predator-fan watch             status atualizando a cada segundo
+  predator-fan daemon            (usado pelo systemd)
+"""
+import json, os, signal, sys, time, glob
+
+CONF = "/etc/predator-fan.json"
+MODE_FILE = "/run/predator-fan/mode"
+DEFAULT_CONF = {
+    "interval": 2.0,
+    "hysteresis": 4,          # °C que a temperatura precisa cair antes de reduzir
+    "panic_temp": 92,         # acima disso: 100% em qualquer modo exceto auto
+    "default_mode": "auto",
+    "curves": {               # [temperatura °C, velocidade %], interpolação linear
+        "curve":  [[45, 25], [60, 40], [70, 55], [80, 75], [88, 100]],
+        "silent": [[50, 15], [65, 30], [75, 45], [85, 70], [90, 100]],
+    },
+}
+
+
+def find_hwmon(name):
+    for h in glob.glob("/sys/class/hwmon/hwmon*"):
+        try:
+            if open(f"{h}/name").read().strip() == name:
+                return h
+        except OSError:
+            pass
+    return None
+
+
+def rd(path):
+    with open(path) as f:
+        return int(f.read().strip())
+
+
+def wr(path, val):
+    with open(path, "w") as f:
+        f.write(str(int(val)))
+
+
+def temps():
+    """Retorna dict nome->°C. Usa sensores do acer_wmi e coretemp (pacote da CPU)."""
+    out = {}
+    acer = find_hwmon("acer")
+    if acer:
+        for p in sorted(glob.glob(f"{acer}/temp*_input")):
+            n = os.path.basename(p).split("_")[0]
+            try:
+                out[f"acer_{n}"] = rd(p) / 1000
+            except OSError:
+                pass
+    core = find_hwmon("coretemp")
+    if core:
+        try:
+            out["cpu_pkg"] = rd(f"{core}/temp1_input") / 1000
+        except OSError:
+            pass
+    return out
+
+
+def load_conf():
+    c = json.loads(json.dumps(DEFAULT_CONF))
+    try:
+        with open(CONF) as f:
+            user = json.load(f)
+        c.update({k: v for k, v in user.items() if k != "curves"})
+        c["curves"].update(user.get("curves", {}))
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        print(f"config inválida ({e}), usando padrão", file=sys.stderr)
+    return c
+
+
+def interp(curve, t):
+    pts = sorted(curve)
+    if t <= pts[0][0]:
+        return pts[0][1]
+    for (t0, s0), (t1, s1) in zip(pts, pts[1:]):
+        if t <= t1:
+            return s0 + (s1 - s0) * (t - t0) / (t1 - t0)
+    return pts[-1][1]
+
+
+def read_mode(default):
+    try:
+        m = open(MODE_FILE).read().strip()
+        return m or default
+    except OSError:
+        return default
+
+
+def valid_mode(m, conf):
+    if m in ("auto", "max") or m in conf["curves"]:
+        return True
+    if m.startswith("fixed:"):
+        try:
+            return 0 <= int(m[6:]) <= 100
+        except ValueError:
+            return False
+    return False
+
+
+# ---------------------------------------------------------------- daemon
+def daemon():
+    if os.geteuid() != 0:
+        sys.exit("daemon precisa rodar como root")
+    hw = find_hwmon("acer")
+    if not hw:
+        sys.exit("hwmon 'acer' não encontrado (módulo acer_wmi carregado?)")
+    fans = [p[:-len("_enable")] for p in sorted(glob.glob(f"{hw}/pwm[0-9]_enable"))]
+
+    def set_auto():
+        for f in fans:
+            try:
+                wr(f"{f}_enable", 2)
+            except OSError:
+                pass
+
+    def bye(*_):
+        set_auto()
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, bye)
+    signal.signal(signal.SIGINT, bye)
+
+    os.makedirs(os.path.dirname(MODE_FILE), exist_ok=True)
+    conf = load_conf()
+    if not os.path.exists(MODE_FILE):
+        with open(MODE_FILE, "w") as f:
+            f.write(conf["default_mode"])
+    os.chmod(MODE_FILE, 0o666)  # permite trocar modo sem sudo (valor é validado)
+
+    last_mode, cur_pct, ref_temp = None, None, None
+    try:
+        while True:
+            conf = load_conf()
+            mode = read_mode(conf["default_mode"])
+            if not valid_mode(mode, conf):
+                mode = conf["default_mode"]
+            t = temps()
+            tmax = max(t.values()) if t else None
+
+            if mode == "auto" and (tmax is None or tmax < conf["panic_temp"]):
+                if last_mode != "auto":
+                    set_auto()
+                last_mode, cur_pct, ref_temp = "auto", None, None
+                time.sleep(conf["interval"])
+                continue
+
+            if tmax is None or tmax >= conf["panic_temp"] or mode == "max":
+                target = 100
+            elif mode.startswith("fixed:"):
+                target = int(mode[6:])
+            else:
+                # histerese: só reduz quando a temperatura cair 'hysteresis' °C
+                if ref_temp is None or tmax > ref_temp or mode != last_mode:
+                    ref_temp = tmax
+                elif tmax < ref_temp - conf["hysteresis"]:
+                    ref_temp = tmax + conf["hysteresis"]
+                target = interp(conf["curves"][mode], ref_temp)
+
+            target = max(0, min(100, round(target)))
+            if target != cur_pct or mode != last_mode:
+                for f in fans:
+                    if rd(f"{f}_enable") != 1:
+                        wr(f"{f}_enable", 1)
+                    wr(f, round(target * 255 / 100))
+                cur_pct = target
+            last_mode = mode
+            time.sleep(conf["interval"])
+    except Exception as e:
+        print(f"erro: {e} — devolvendo ao firmware", file=sys.stderr)
+        set_auto()
+        raise
+
+
+# ---------------------------------------------------------------- CLI
+def status():
+    hw = find_hwmon("acer")
+    t = temps()
+    print("Temperaturas: " + "  ".join(f"{k}={v:.0f}°C" for k, v in t.items()))
+    if hw:
+        for i in (1, 2):
+            try:
+                rpm = rd(f"{hw}/fan{i}_input")
+                pwm = rd(f"{hw}/pwm{i}")
+                en = rd(f"{hw}/pwm{i}_enable")
+                print(f"Ventoinha {i} ({'CPU' if i == 1 else 'GPU'}): {rpm:5d} RPM  "
+                      f"pwm={pwm * 100 // 255:3d}%  {'manual' if en == 1 else 'firmware'}")
+            except OSError:
+                pass
+    active = os.system("systemctl is-active --quiet predator-fan") == 0
+    print(f"Serviço: {'ativo' if active else 'parado'}   Modo: {read_mode('?')}")
+
+
+def set_mode(m):
+    conf = load_conf()
+    if not valid_mode(m, conf):
+        sys.exit(f"modo inválido: {m}")
+    try:
+        with open(MODE_FILE, "w") as f:
+            f.write(m)
+    except OSError:
+        sys.exit("não consegui escrever o modo — o serviço está rodando? "
+                 "(sudo systemctl start predator-fan)")
+    print(f"modo -> {m}")
+
+
+def main():
+    a = sys.argv[1:]
+    if not a or a[0] in ("-h", "--help", "help"):
+        print(__doc__)
+    elif a[0] == "daemon":
+        daemon()
+    elif a[0] == "status":
+        status()
+    elif a[0] == "watch":
+        try:
+            while True:
+                os.system("clear")
+                status()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            pass
+    elif a[0] == "set" and len(a) == 2:
+        set_mode(f"fixed:{a[1].rstrip('%')}")
+    else:
+        set_mode(a[0])
+
+
+if __name__ == "__main__":
+    main()
