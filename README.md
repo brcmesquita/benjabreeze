@@ -11,9 +11,8 @@ hwmon interface (no out-of-tree modules). Lightweight daemon + CLI + KDE/Qt tray
 
 ## Recursos
 
-- Modos: `auto` (firmware Acer), `curve`, `silent`, `max`, velocidade fixa (`set N`) e
-  velocidade mínima que sobe sozinha se esquentar (`min N`)
-- Curvas temperatura → velocidade configuráveis, com histerese (evita sobe-e-desce)
+- Modos: `auto` (firmware Acer), `max`, velocidade fixa (`set N`) e velocidade mínima
+  que sobe sozinha se esquentar (`min N`)
 - Ícone na bandeja mostrando a temperatura, com menu para trocar de modo
 - Segurança: acima de 92 °C (configurável) força 100 %; se o serviço parar ou falhar,
   o controle volta ao firmware
@@ -57,8 +56,6 @@ o modo volta ao padrão).
 | `benjabreeze status` | temperaturas, RPM e modo |
 | `benjabreeze watch` | status atualizando a cada segundo |
 | `benjabreeze auto` | controle do firmware Acer |
-| `benjabreeze curve` | curva normal |
-| `benjabreeze silent` | curva silenciosa |
 | `benjabreeze max` | 100 % |
 | `benjabreeze set <0-100>` | velocidade fixa — qualquer valor: `set 30`, `set 45`, `set 80`… |
 | `benjabreeze min <0-100>` | velocidade mínima — ex. `min 40`: nunca abaixo de 40 %, sobe se esquentar |
@@ -93,10 +90,6 @@ Na primeira vez, o modo é o `default_mode` da configuração (`auto`).
 
 - **`auto`** — o firmware da Acer decide, exatamente como sem o BenjaBreeze. O serviço
   fica praticamente parado, só esperando você trocar de modo.
-- **`curve` / `silent`** — automáticos: a cada 2 s o BenjaBreeze lê a temperatura e
-  ajusta a velocidade pela curva. Esquentou → acelera; esfriou → desacelera (com
-  histerese de 4 °C para não ficar oscilando). Se você procurava um modo "follow"
-  (sobe quando aquece, volta quando esfria), é isto.
 - **`max`** — 100 % o tempo todo.
 - **`set N`** — **fixo** em N %, não importa a temperatura. A única exceção é a proteção:
   a partir de 92 °C vai para 100 %. A partir de 85 °C (`warn_temp`) o ícone mostra
@@ -105,7 +98,8 @@ Na primeira vez, o modo é o `default_mode` da configuração (`auto`).
   precisar", use `min`.
 - **`min N`** — velocidade mínima de trabalho. Fica em N % enquanto a temperatura está
   sob controle; se ela subir (troca para modo desempenho, carga pesada), acelera seguindo
-  a curva `curve` até a temperatura cair e então volta aos N %. Ideal para quem gosta do
+  uma curva de segurança até a temperatura cair e então volta aos N % (com histerese de
+  4 °C para não ficar oscilando). Ideal para quem gosta do
   notebook sempre frio sem o risco de ficar preso numa velocidade insuficiente.
   Exemplo com `min 40`:
 
@@ -164,16 +158,18 @@ meteorológicos e câmeras térmicas — do azul gelo ao vermelho vulcão:
   "default_mode": "auto",
   "min_curve": "curve",
   "curves": {
-    "curve":  [[45, 25], [60, 40], [70, 55], [80, 75], [88, 100]],
-    "silent": [[50, 15], [65, 30], [75, 45], [85, 70], [90, 100]]
+    "curve":  [[45, 25], [60, 40], [70, 55], [80, 75], [88, 100]]
   }
 }
 ```
 
-Cada ponto é `[temperatura °C, velocidade %]`. Você pode criar curvas novas e usá-las
-com `benjabreeze <nome>`. A temperatura usada é a maior entre os sensores do `acer_wmi`
-e o pacote da CPU (`coretemp`). `min_curve` define qual curva o modo `min` segue acima
-do mínimo.
+`curves.curve` é a curva de segurança que o modo `min` segue acima do mínimo: cada ponto
+é `[temperatura °C, velocidade %]`. A temperatura usada é a maior entre os sensores do
+`acer_wmi` e o pacote da CPU (`coretemp`).
+
+> Não existe (por enquanto) um modo automático do BenjaBreeze substituindo o do firmware:
+> o automático é sempre o da Acer. Um automático próprio só virá com o modo aprendizado
+> (veja o roadmap), baseado em dados reais medidos em cada modelo.
 
 ## Roadmap
 

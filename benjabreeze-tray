@@ -31,7 +31,7 @@ else:
 
 tr = pf.tr
 
-MODES = ["auto", "curve", "silent", "max"]   # rótulos em i18n.json: mode_<nome>
+MODES = ["auto", "max"]   # rótulos em i18n.json: mode_<nome>
 FIXED = [30, 50, 70]
 MINIMUM = [30, 40, 50, 60]
 
@@ -99,7 +99,7 @@ def make_icon(t, unit="C"):
     return QIcon(pm)
 
 
-INTERVAL_ACTIVE = 2000   # ms — modos manuais/curvas
+INTERVAL_ACTIVE = 2000   # ms — modos controlados pelo BenjaBreeze
 INTERVAL_AUTO = 5000     # ms — firmware no controle: atualiza menos
 
 

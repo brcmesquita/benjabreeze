@@ -3,6 +3,17 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.11.0] — 2026-11-15
+
+### Removido
+- Modos `curve` (Curva normal) e `silent` (Silencioso), do ícone e do terminal. O único
+  modo automático passa a ser o do firmware da Acer (`auto`). Um automático próprio só
+  virá com o futuro modo aprendizado, baseado em dados medidos.
+- Se o modo salvo era `curve` ou `silent`, o BenjaBreeze volta para `auto`.
+
+### Alterado
+- `curves.curve` na configuração passa a ser só a curva de segurança do modo `min`.
+
 ## [0.10.1] — 2026-11-15
 
 ### Corrigido
@@ -119,6 +130,7 @@ Primeira versão pública — só terminal (nome original: `predator-fan`).
 - Proteção: 100 % acima de 92 °C; controle volta ao firmware se o serviço parar.
 - `install.sh` / `uninstall.sh`.
 
+[0.11.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.10.1...v0.11.0
 [0.10.1]: https://github.com/brcmesquita/benjabreeze/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.8.0...v0.9.0

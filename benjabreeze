@@ -4,8 +4,6 @@
 Uso:
   benjabreeze status            mostra temperaturas, RPM e modo
   benjabreeze auto              devolve o controle ao firmware (padrão Acer)
-  benjabreeze curve             usa a curva normal do arquivo de config
-  benjabreeze silent            usa a curva silenciosa
   benjabreeze max               100% nas duas ventoinhas
   benjabreeze set <0-100>       velocidade fixa (%), qualquer valor
   benjabreeze min <0-100>       velocidade mínima: nunca abaixo de N%, mas sobe
@@ -24,7 +22,7 @@ import signal
 import sys
 import time
 
-VERSION = "0.10.1"
+VERSION = "0.11.0"
 CONF = "/etc/benjabreeze.json"
 RUN_DIR = "/run/benjabreeze"          # tmpfs (RAM): nada é gravado em disco
 MODE_FILE = RUN_DIR + "/mode"
@@ -38,7 +36,6 @@ DEFAULT_CONF = {
     "min_curve": "curve",     # curva usada acima do mínimo no modo min
     "curves": {               # [temperatura °C, velocidade %], interpolação linear
         "curve":  [[45, 25], [60, 40], [70, 55], [80, 75], [88, 100]],
-        "silent": [[50, 15], [65, 30], [75, 45], [85, 70], [90, 100]],
     },
 }
 
@@ -233,7 +230,7 @@ def service_running():
 
 
 def valid_mode(m, conf):
-    if m in ("auto", "max") or m in conf["curves"]:
+    if m in ("auto", "max"):
         return True
     if m.startswith(("fixed:", "min:")):
         try:
@@ -272,7 +269,7 @@ def compute_target(mode, tmax, conf, st):
     if mode.startswith("min:"):
         curve = conf["curves"].get(conf.get("min_curve"), DEFAULT_CONF["curves"]["curve"])
         return max(int(mode[4:]), min(100, round(interp(curve, ref))))
-    return max(0, min(100, round(interp(conf["curves"][mode], ref))))
+    return 100  # modo desconhecido: por segurança, máximo
 
 
 # ---------------------------------------------------------------- daemon
