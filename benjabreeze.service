@@ -6,8 +6,13 @@ After=multi-user.target
 Type=simple
 ExecStart=/usr/local/bin/benjabreeze daemon
 ExecStopPost=/bin/sh -c 'for f in /sys/class/hwmon/hwmon*/pwm*_enable; do grep -qx acer "$(dirname $f)/name" && echo 2 > "$f"; done; true'
+# /run/benjabreeze (RAM) é criado ao subir e apagado ao parar; mantido entre reinícios automáticos
+RuntimeDirectory=benjabreeze
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=restart
 Restart=on-failure
 RestartSec=3
+Nice=10
 
 [Install]
 WantedBy=multi-user.target

@@ -7,14 +7,22 @@ Uso:
   benjabreeze curve             usa a curva normal do arquivo de config
   benjabreeze silent            usa a curva silenciosa
   benjabreeze max               100% nas duas ventoinhas
-  benjabreeze set <0-100>       velocidade fixa (%)
+  benjabreeze set <0-100>       velocidade fixa (%), qualquer valor
   benjabreeze watch             status atualizando a cada segundo
+  benjabreeze --version         mostra a versão
   benjabreeze daemon            (usado pelo systemd)
 """
-import json, os, signal, sys, time, glob
+import glob
+import json
+import os
+import signal
+import sys
+import time
 
+VERSION = "0.4.0"
 CONF = "/etc/benjabreeze.json"
-MODE_FILE = "/run/benjabreeze/mode"
+RUN_DIR = "/run/benjabreeze"          # tmpfs (RAM): nada é gravado em disco
+MODE_FILE = RUN_DIR + "/mode"
 DEFAULT_CONF = {
     "interval": 2.0,
     "hysteresis": 4,          # °C que a temperatura precisa cair antes de reduzir
@@ -27,11 +35,13 @@ DEFAULT_CONF = {
 }
 
 
+# ---------------------------------------------------------------- sysfs
 def find_hwmon(name):
     for h in glob.glob("/sys/class/hwmon/hwmon*"):
         try:
-            if open(f"{h}/name").read().strip() == name:
-                return h
+            with open(f"{h}/name") as f:
+                if f.read().strip() == name:
+                    return h
         except OSError:
             pass
     return None
@@ -47,26 +57,31 @@ def wr(path, val):
         f.write(str(int(val)))
 
 
-def temps():
-    """Retorna dict nome->°C. Usa sensores do acer_wmi e coretemp (pacote da CPU)."""
-    out = {}
+def sensor_paths():
+    """Resolve uma vez os arquivos de temperatura (acer_wmi + pacote da CPU)."""
+    paths = {}
     acer = find_hwmon("acer")
     if acer:
         for p in sorted(glob.glob(f"{acer}/temp*_input")):
-            n = os.path.basename(p).split("_")[0]
-            try:
-                out[f"acer_{n}"] = rd(p) / 1000
-            except OSError:
-                pass
+            paths["acer_" + os.path.basename(p).split("_")[0]] = p
     core = find_hwmon("coretemp")
-    if core:
+    if core and os.path.exists(f"{core}/temp1_input"):
+        paths["cpu_pkg"] = f"{core}/temp1_input"
+    return paths
+
+
+def temps(paths=None):
+    """Lê as temperaturas (°C). Passe `paths` já resolvido para não varrer o sysfs."""
+    out = {}
+    for k, p in (paths if paths is not None else sensor_paths()).items():
         try:
-            out["cpu_pkg"] = rd(f"{core}/temp1_input") / 1000
+            out[k] = rd(p) / 1000
         except OSError:
             pass
     return out
 
 
+# ---------------------------------------------------------------- config
 def load_conf():
     c = json.loads(json.dumps(DEFAULT_CONF))
     try:
@@ -81,22 +96,33 @@ def load_conf():
     return c
 
 
-def interp(curve, t):
-    pts = sorted(curve)
-    if t <= pts[0][0]:
-        return pts[0][1]
-    for (t0, s0), (t1, s1) in zip(pts, pts[1:]):
-        if t <= t1:
-            return s0 + (s1 - s0) * (t - t0) / (t1 - t0)
-    return pts[-1][1]
+class Config:
+    """Só relê o arquivo de configuração quando ele muda."""
+
+    def __init__(self):
+        self.mtime, self.data = None, None
+
+    def get(self):
+        try:
+            m = os.stat(CONF).st_mtime
+        except OSError:
+            m = 0
+        if m != self.mtime:
+            self.data, self.mtime = load_conf(), m
+        return self.data
 
 
 def read_mode(default):
     try:
-        m = open(MODE_FILE).read().strip()
-        return m or default
+        with open(MODE_FILE) as f:
+            return f.read().strip() or default
     except OSError:
         return default
+
+
+def service_running():
+    # O systemd cria /run/benjabreeze quando o serviço sobe e apaga quando para.
+    return os.path.exists(MODE_FILE)
 
 
 def valid_mode(m, conf):
@@ -110,6 +136,35 @@ def valid_mode(m, conf):
     return False
 
 
+# ---------------------------------------------------------------- lógica
+def interp(curve, t):
+    pts = sorted(curve)
+    if t <= pts[0][0]:
+        return pts[0][1]
+    for (t0, s0), (t1, s1) in zip(pts, pts[1:]):
+        if t <= t1:
+            return s0 + (s1 - s0) * (t - t0) / (t1 - t0)
+    return pts[-1][1]
+
+
+def compute_target(mode, tmax, conf, st):
+    """Velocidade alvo (%) para o modo e a temperatura máxima atual.
+
+    `st` guarda o estado da histerese entre chamadas (zere ao trocar de modo).
+    """
+    if tmax is None or tmax >= conf["panic_temp"] or mode == "max":
+        return 100
+    if mode.startswith("fixed:"):
+        return int(mode[6:])
+    ref = st.get("ref")
+    if ref is None or tmax > ref:
+        ref = tmax
+    elif tmax < ref - conf["hysteresis"]:
+        ref = tmax + conf["hysteresis"]
+    st["ref"] = ref
+    return max(0, min(100, round(interp(conf["curves"][mode], ref))))
+
+
 # ---------------------------------------------------------------- daemon
 def daemon():
     if os.geteuid() != 0:
@@ -118,6 +173,7 @@ def daemon():
     if not hw:
         sys.exit("hwmon 'acer' não encontrado (módulo acer_wmi carregado?)")
     fans = [p[:-len("_enable")] for p in sorted(glob.glob(f"{hw}/pwm[0-9]_enable"))]
+    sensors = sensor_paths()
 
     def set_auto():
         for f in fans:
@@ -133,43 +189,35 @@ def daemon():
     signal.signal(signal.SIGTERM, bye)
     signal.signal(signal.SIGINT, bye)
 
-    os.makedirs(os.path.dirname(MODE_FILE), exist_ok=True)
-    conf = load_conf()
+    cfg = Config()
+    conf = cfg.get()
+    os.makedirs(RUN_DIR, exist_ok=True)
     if not os.path.exists(MODE_FILE):
         with open(MODE_FILE, "w") as f:
             f.write(conf["default_mode"])
     os.chmod(MODE_FILE, 0o666)  # permite trocar modo sem sudo (valor é validado)
 
-    last_mode, cur_pct, ref_temp = None, None, None
+    last_mode, cur_pct, st = None, None, {}
     try:
         while True:
-            conf = load_conf()
+            conf = cfg.get()
             mode = read_mode(conf["default_mode"])
             if not valid_mode(mode, conf):
                 mode = conf["default_mode"]
-            t = temps()
-            tmax = max(t.values()) if t else None
 
-            if mode == "auto" and (tmax is None or tmax < conf["panic_temp"]):
+            if mode == "auto":
+                # Firmware no controle: não lê sensores nem escreve nada,
+                # só confere se o modo mudou.
                 if last_mode != "auto":
                     set_auto()
-                last_mode, cur_pct, ref_temp = "auto", None, None
+                last_mode, cur_pct, st = "auto", None, {}
                 time.sleep(conf["interval"])
                 continue
 
-            if tmax is None or tmax >= conf["panic_temp"] or mode == "max":
-                target = 100
-            elif mode.startswith("fixed:"):
-                target = int(mode[6:])
-            else:
-                # histerese: só reduz quando a temperatura cair 'hysteresis' °C
-                if ref_temp is None or tmax > ref_temp or mode != last_mode:
-                    ref_temp = tmax
-                elif tmax < ref_temp - conf["hysteresis"]:
-                    ref_temp = tmax + conf["hysteresis"]
-                target = interp(conf["curves"][mode], ref_temp)
-
-            target = max(0, min(100, round(target)))
+            if mode != last_mode:
+                st = {}
+            t = temps(sensors)
+            target = compute_target(mode, max(t.values()) if t else None, conf, st)
             if target != cur_pct or mode != last_mode:
                 for f in fans:
                     if rd(f"{f}_enable") != 1:
@@ -199,20 +247,21 @@ def status():
                       f"pwm={pwm * 100 // 255:3d}%  {'manual' if en == 1 else 'firmware'}")
             except OSError:
                 pass
-    active = os.system("systemctl is-active --quiet benjabreeze") == 0
-    print(f"Serviço: {'ativo' if active else 'parado'}   Modo: {read_mode('?')}")
+    active = service_running()
+    print(f"Serviço: {'ativo' if active else 'parado'}   Modo: {read_mode('?') if active else '-'}")
 
 
 def set_mode(m):
     conf = load_conf()
     if not valid_mode(m, conf):
         sys.exit(f"modo inválido: {m}")
+    if not service_running():
+        sys.exit("o serviço não está rodando (sudo systemctl start benjabreeze)")
     try:
         with open(MODE_FILE, "w") as f:
             f.write(m)
-    except OSError:
-        sys.exit("não consegui escrever o modo — o serviço está rodando? "
-                 "(sudo systemctl start benjabreeze)")
+    except OSError as e:
+        sys.exit(f"não consegui trocar o modo: {e}")
     print(f"modo -> {m}")
 
 
@@ -220,6 +269,8 @@ def main():
     a = sys.argv[1:]
     if not a or a[0] in ("-h", "--help", "help"):
         print(__doc__)
+    elif a[0] in ("-v", "--version", "version"):
+        print(f"benjabreeze {VERSION}")
     elif a[0] == "daemon":
         daemon()
     elif a[0] == "status":
@@ -227,7 +278,7 @@ def main():
     elif a[0] == "watch":
         try:
             while True:
-                os.system("clear")
+                print("\033[H\033[J", end="")
                 status()
                 time.sleep(1)
         except KeyboardInterrupt:

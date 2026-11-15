@@ -64,13 +64,17 @@ def make_icon(t):
     return QIcon(pm)
 
 
-def service_active():
-    return os.system("systemctl is-active --quiet benjabreeze") == 0
+INTERVAL_ACTIVE = 2000   # ms — modos manuais/curvas
+INTERVAL_AUTO = 5000     # ms — firmware no controle: atualiza menos
 
 
 class Tray:
     def __init__(self, app):
         self.app = app
+        self.sensors = pf.sensor_paths()       # resolvido uma vez
+        self.hw = pf.find_hwmon("acer")
+        self.last_icon_temp = object()
+        self.last_tip = None
         self.tray = QSystemTrayIcon(make_icon(None))
         self.menu = QMenu()
 
@@ -97,9 +101,10 @@ class Tray:
         self.tray.activated.connect(self._on_click)
         self.tray.show()
 
+        self.menu.aboutToShow.connect(self.refresh)  # dados frescos ao abrir o menu
         self.timer = QTimer()
         self.timer.timeout.connect(self.refresh)
-        self.timer.start(2000)
+        self.timer.start(INTERVAL_ACTIVE)
         self.refresh()
 
     def _mode_action(self, menu, key, label):
@@ -126,18 +131,20 @@ class Tray:
         self.refresh()
 
     def refresh(self):
-        t = pf.temps()
+        t = pf.temps(self.sensors)
         tmax = max(t.values()) if t else None
-        hw = pf.find_hwmon("acer")
         fans = []
-        if hw:
+        if self.hw:
             for i in (1, 2):
                 try:
-                    fans.append(pf.rd(f"{hw}/fan{i}_input"))
+                    fans.append(pf.rd(f"{self.hw}/fan{i}_input"))
                 except OSError:
                     fans.append(None)
-        active = service_active()
+        active = pf.service_running()
         mode = pf.read_mode("?") if active else "serviço parado"
+        want = INTERVAL_AUTO if mode in ("auto", "serviço parado") else INTERVAL_ACTIVE
+        if self.timer.interval() != want:
+            self.timer.setInterval(want)
 
         cpu = t.get("cpu_pkg")
         lines = [
@@ -152,8 +159,15 @@ class Tray:
             a.setChecked(key == mode)
             a.setEnabled(active)
 
-        self.tray.setIcon(make_icon(tmax))
-        self.tray.setToolTip("BenjaBreeze\n" + "\n".join(lines))
+        # Só redesenha/atualiza quando algo visível mudou
+        icon_temp = None if tmax is None else round(tmax)
+        if icon_temp != self.last_icon_temp:
+            self.tray.setIcon(make_icon(icon_temp))
+            self.last_icon_temp = icon_temp
+        tip = "BenjaBreeze\n" + "\n".join(lines)
+        if tip != self.last_tip:
+            self.tray.setToolTip(tip)
+            self.last_tip = tip
 
 
 def main():

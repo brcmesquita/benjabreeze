@@ -4,20 +4,21 @@ Controle de ventoinhas para notebooks **Acer Predator** no Linux, usando apenas 
 `acer_wmi` que já vem no kernel — **sem módulo de kernel extra, sem compilar nada**.
 
 *Fan control for Acer Predator laptops on Linux using only the in-kernel `acer_wmi`
-hwmon interface (no out-of-tree modules). Simple daemon + CLI + KDE/Qt tray icon.*
+hwmon interface (no out-of-tree modules). Lightweight daemon + CLI + KDE/Qt tray icon.*
 
 > Projeto independente, sem afiliação com a Acer. *Acer* e *Predator* são marcas
 > da Acer Inc., citadas apenas para indicar compatibilidade.
 
 ## Recursos
 
-- Modos: `auto` (firmware Acer), `curve`, `silent`, `max` e velocidade fixa
+- Modos: `auto` (firmware Acer), `curve`, `silent`, `max` e velocidade fixa (`set N`)
 - Curvas temperatura → velocidade configuráveis, com histerese (evita sobe-e-desce)
 - Ícone na bandeja mostrando a temperatura, com menu para trocar de modo
 - Segurança: acima de 92 °C (configurável) força 100 %; se o serviço parar ou falhar,
   o controle volta ao firmware
 - Trocar de modo não exige sudo
-- Python puro (o ícone usa PyQt6)
+- Leve: não grava nada em disco, não gera logs; no modo `auto` nem lê sensores
+  (veja [Consumo de recursos](#consumo-de-recursos-e-privacidade))
 
 ## Requisitos
 
@@ -31,7 +32,7 @@ hwmon interface (no out-of-tree modules). Simple daemon + CLI + KDE/Qt tray icon
 - Para o ícone: PyQt6 (`sudo apt install python3-pyqt6`)
 
 Testado em: **Predator Helios Neo 16 (PHN16-72)**, Kubuntu, kernel 7.0.
-Outros modelos com a mesma interface devem funcionar — relatos são bem-vindos.
+Outros modelos com a mesma interface devem funcionar — [relatos são bem-vindos](#contribuindo).
 
 ## Instalação
 
@@ -43,6 +44,9 @@ sudo sh install.sh
 
 O padrão após instalar é `auto`: nada muda até você escolher outro modo.
 
+**Atualizar:** `git pull && sudo sh install.sh` (sua `/etc/benjabreeze.json` é mantida;
+o modo volta ao padrão).
+
 ## Uso
 
 | Comando | Efeito |
@@ -53,15 +57,48 @@ O padrão após instalar é `auto`: nada muda até você escolher outro modo.
 | `benjabreeze curve` | curva normal |
 | `benjabreeze silent` | curva silenciosa |
 | `benjabreeze max` | 100 % |
-| `benjabreeze set 60` | fixo em 60 % (proteção de 92 °C continua ativa) |
+| `benjabreeze set <0-100>` | velocidade fixa — qualquer valor: `set 30`, `set 45`, `set 80`… |
+| `benjabreeze --version` | versão instalada |
 
 Ícone na bandeja: `benjabreeze-tray` (ou "BenjaBreeze" no menu; inicia no login).
 
 O modo volta ao `default_mode` a cada boot.
 
+### Entendendo os modos
+
+- **`auto`** — o firmware da Acer decide, exatamente como sem o BenjaBreeze. O serviço
+  fica praticamente parado, só esperando você trocar de modo.
+- **`curve` / `silent`** — automáticos: a cada 2 s o BenjaBreeze lê a temperatura e
+  ajusta a velocidade pela curva. Esquentou → acelera; esfriou → desacelera (com
+  histerese de 4 °C para não ficar oscilando). Se você procurava um modo "follow"
+  (sobe quando aquece, volta quando esfria), é isto.
+- **`max`** — 100 % o tempo todo.
+- **`set N`** — **fixo** em N %, não importa a temperatura. A única exceção é a proteção:
+  a partir de 92 °C vai para 100 %. Se você quer "pelo menos N %, mas subindo quando
+  precisar", aguarde o modo `min` ([roadmap](#roadmap)).
+
+## Consumo de recursos e privacidade
+
+- **Nada é gravado em disco.** Sem logs, sem histórico, sem cache. O único arquivo de
+  estado é `/run/benjabreeze/mode` (alguns bytes, em RAM), apagado quando o serviço para.
+- **Nada sai do seu computador.** Não há rede, telemetria ou coleta de dados.
+- **O que é lido:** a cada 2 s, poucos arquivos virtuais do kernel (`/sys`) com
+  temperatura e RPM. Os valores ficam numa variável e são descartados na leitura seguinte.
+- **No modo `auto`** o serviço não lê sensores — só confere se o modo mudou.
+- **Medições** (PHN16-72):
+
+  | Componente | RAM | CPU |
+  |---|---|---|
+  | Serviço (`benjabreeze daemon`) | ~13 MB | ~0,1 % de um núcleo |
+  | Ícone (`benjabreeze-tray`) | ~25–35 MB próprios* | ~0,15 % de um núcleo |
+
+  \* O `ps` mostra ~140 MB porque inclui as bibliotecas Qt, que o KDE já tem carregadas e
+  são compartilhadas entre programas. O ícone é opcional: se não quiser, remova
+  `/etc/xdg/autostart/benjabreeze-tray.desktop` e use só o CLI.
+
 ## Configuração
 
-`/etc/benjabreeze.json` (recarregado automaticamente):
+`/etc/benjabreeze.json` (relido automaticamente quando é alterado):
 
 ```json
 {
@@ -80,6 +117,53 @@ Cada ponto é `[temperatura °C, velocidade %]`. Você pode criar curvas novas e
 com `benjabreeze <nome>`. A temperatura usada é a maior entre os sensores do `acer_wmi`
 e o pacote da CPU (`coretemp`).
 
+## Roadmap
+
+Próximas versões, uma funcionalidade por release:
+
+- **v0.5.0 — Velocidade mínima (`min N`)**: ex. `benjabreeze min 40` — nunca abaixo de
+  40 %; se a temperatura subir (troca para modo desempenho, carga pesada), acelera
+  seguindo a curva até a temperatura cair, e então volta aos 40 %. Para quem gosta do
+  notebook sempre frio sem medo de ficar preso numa velocidade insuficiente.
+- **v0.6.0 — Aviso de temperatura**: no modo `set` fixo, o ícone mostra uma notificação
+  quando a temperatura passa de um limite (ex. 85 °C), sugerindo aumentar a velocidade
+  ou usar `min`.
+- **v0.7.0 — Relatório de compatibilidade**: `benjabreeze report` gera um texto com
+  modelo, BIOS, kernel e interfaces detectadas, para colar numa issue do GitHub.
+
+### Milestone: modo aprendizado e base de dados por modelo
+
+Ideia: um modo opcional (`learn`) que observa o notebook e anota quantos RPM são
+necessários para **manter** e para **baixar** cada faixa de temperatura (ex. de 5 em
+5 °C, de 40 a 90 °C; acima de 90 °C sempre máximo). Com isso:
+
+1. Gerar uma curva sob medida para o seu notebook.
+2. Juntar dados de vários usuários e montar curvas recomendadas **por modelo**
+   (`profiles/PHN16-72.json`, etc.), além de uma lista de compatibilidade.
+
+Princípios:
+- **Opt-in explícito.** Desligado por padrão; ao ativar, o programa explica o que é
+  coletado. Sem coleta, nada muda.
+- **Sem envio automático, sem servidor.** O programa só gera um resumo em texto
+  (uma tabela pequena, sem dados pessoais — só modelo, BIOS, kernel e números de
+  temperatura/RPM). O usuário revisa e decide se envia, abrindo uma issue no GitHub
+  com um template próprio.
+- **Mínimo de recursos:** guarda só a tabela agregada (poucos KB), nunca um histórico
+  bruto crescendo no disco.
+
+### Outras ideias
+
+- Editor de curvas no ícone da bandeja
+- Pacotes `.deb` / AUR
+
+## Contribuindo
+
+Testou em outro modelo? Abra uma [issue](https://github.com/brcmesquita/benjabreeze/issues)
+com o modelo (`cat /sys/class/dmi/id/product_name`), kernel (`uname -r`) e a saída de
+`benjabreeze status`, dizendo se `benjabreeze max` mudou o RPM.
+
+Histórico de versões: [CHANGELOG.md](CHANGELOG.md).
+
 ## Desinstalar
 
 ```sh
@@ -93,4 +177,4 @@ desligamento) continua ativa, mas curvas muito baixas podem deixar o notebook qu
 
 ## Licença
 
-MIT
+[MIT](LICENSE)
