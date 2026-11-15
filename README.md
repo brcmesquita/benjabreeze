@@ -92,6 +92,23 @@ O modo volta ao `default_mode` a cada boot.
   |---|---|---|---|---|---|
   | Velocidade | 40 % | 48 % | 65 % | 81 % | volta gradualmente a 40 % |
 
+### Cores do ícone
+
+O ícone mostra a temperatura mais alta com uma escala de cores no estilo dos mapas
+meteorológicos e câmeras térmicas — do azul gelo ao vermelho vulcão:
+
+| Faixa | Cor | |
+|---|---|---|
+| abaixo de 30 °C | azul-marinho | nevasca |
+| 30–39 °C | azul | frio |
+| 40–49 °C | ciano | fresco |
+| 50–59 °C | verde | confortável |
+| 60–69 °C | verde-limão | morno |
+| 70–79 °C | amarelo | quente |
+| 80–84 °C | laranja | muito quente |
+| 85–91 °C | vermelho | perigo |
+| 92 °C ou mais | vermelho-escuro com borda amarela | vulcão — ventoinhas no máximo |
+
 ## Consumo de recursos e privacidade
 
 - **Nada é gravado em disco.** Sem logs, sem histórico, sem cache. O único arquivo de

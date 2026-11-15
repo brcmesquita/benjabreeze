@@ -43,27 +43,49 @@ def mode_label(mode):
     return dict(MODES).get(mode, mode)
 
 
-def temp_color(t):
+# Escala de cores de temperatura (estilo mapa meteorológico / câmera térmica):
+# do azul gelo ao vermelho vulcão. (limite superior °C, fundo, texto)
+TEMP_SCALE = [
+    (30, "#1E3A8A", "#FFFFFF"),    # nevasca
+    (40, "#1D4ED8", "#FFFFFF"),    # frio
+    (50, "#0891B2", "#FFFFFF"),    # fresco
+    (60, "#16A34A", "#FFFFFF"),    # confortável
+    (70, "#84CC16", "#1A1A1A"),    # morno
+    (80, "#FACC15", "#1A1A1A"),    # quente
+    (85, "#F97316", "#1A1A1A"),    # muito quente
+    (92, "#DC2626", "#FFFFFF"),    # perigo
+    (999, "#7F1D1D", "#FFFFFF"),   # vulcão: ventoinhas no máximo
+]
+VOLCANO_BORDER = "#FDE047"
+UNKNOWN = ("#6B7280", "#FFFFFF")
+
+
+def temp_colors(t):
+    """(fundo, texto) para a temperatura em °C."""
     if t is None:
-        return QColor("#888888")
-    if t < 60:
-        return QColor("#3fb950")
-    if t < 75:
-        return QColor("#d29922")
-    if t < 85:
-        return QColor("#f0883e")
-    return QColor("#f85149")
+        return UNKNOWN
+    for limit, bg, fg in TEMP_SCALE:
+        if t < limit:
+            return bg, fg
+    return TEMP_SCALE[-1][1:]
 
 
 def make_icon(t):
+    bg, fg = temp_colors(t)
     pm = QPixmap(64, 64)
     pm.fill(Qt.GlobalColor.transparent)
     p = QPainter(pm)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
-    p.setBrush(temp_color(t))
-    p.setPen(Qt.PenStyle.NoPen)
-    p.drawRoundedRect(QRectF(2, 2, 60, 60), 14, 14)
-    p.setPen(QColor("white"))
+    p.setBrush(QColor(bg))
+    if t is not None and t >= TEMP_SCALE[-2][0]:
+        pen = p.pen()
+        pen.setColor(QColor(VOLCANO_BORDER))
+        pen.setWidth(5)
+        p.setPen(pen)
+    else:
+        p.setPen(Qt.PenStyle.NoPen)
+    p.drawRoundedRect(QRectF(3, 3, 58, 58), 14, 14)
+    p.setPen(QColor(fg))
     f = QFont()
     f.setBold(True)
     f.setPixelSize(36)

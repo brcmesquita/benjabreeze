@@ -3,6 +3,13 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.7.0] — 2026-11-15
+
+### Adicionado
+- Escala de cores de temperatura no ícone, no estilo dos mapas meteorológicos:
+  azul-marinho (nevasca) → azul → ciano → verde → verde-limão → amarelo → laranja →
+  vermelho → vermelho-escuro com borda amarela (vulcão, a partir de 92 °C).
+
 ## [0.6.1] — 2026-11-15
 
 ### Alterado
@@ -71,6 +78,7 @@ Primeira versão pública — só terminal (nome original: `predator-fan`).
 - Proteção: 100 % acima de 92 °C; controle volta ao firmware se o serviço parar.
 - `install.sh` / `uninstall.sh`.
 
+[0.7.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/brcmesquita/benjabreeze/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.4.0...v0.5.0
