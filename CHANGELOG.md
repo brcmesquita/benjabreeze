@@ -3,6 +3,14 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.10.1] — 2026-11-15
+
+### Corrigido
+- Abrir o BenjaBreeze pelo menu quando ele já está aberto criava um segundo ícone. Agora é
+  instância única: a segunda cópia avisa a primeira ("já está aberto") e fecha.
+- "Velocidade mínima" e "Velocidade fixa" agora mostram a marcação quando estão ativas,
+  com o valor no nome (ex. "Velocidade mínima (50%)").
+
 ## [0.10.0] — 2026-11-15
 
 ### Adicionado
@@ -111,6 +119,7 @@ Primeira versão pública — só terminal (nome original: `predator-fan`).
 - Proteção: 100 % acima de 92 °C; controle volta ao firmware se o serviço parar.
 - `install.sh` / `uninstall.sh`.
 
+[0.10.1]: https://github.com/brcmesquita/benjabreeze/compare/v0.10.0...v0.10.1
 [0.10.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.7.0...v0.8.0

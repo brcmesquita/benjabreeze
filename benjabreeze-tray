@@ -13,6 +13,7 @@ import subprocess
 import sys
 
 from PyQt6.QtCore import QProcess, QTimer, Qt, QRectF
+from PyQt6.QtNetwork import QLocalServer, QLocalSocket
 from PyQt6.QtGui import QAction, QActionGroup, QColor, QFont, QIcon, QPainter, QPixmap
 from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
@@ -143,6 +144,12 @@ class Tray:
         self.fixed_menu = self.menu.addMenu("")
         for pct in FIXED:
             self.actions[f"fixed:{pct}"] = self._mode_action(self.fixed_menu, f"fixed:{pct}", f"{pct}%")
+        # Submenus num grupo exclusivo próprio: o estilo desenha "bolinha" como nos modos
+        self.sub_group = QActionGroup(self.menu)
+        self.sub_group.setExclusionPolicy(QActionGroup.ExclusionPolicy.ExclusiveOptional)
+        for m in (self.min_menu, self.fixed_menu):
+            m.menuAction().setCheckable(True)
+            self.sub_group.addAction(m.menuAction())
         self.menu.addSeparator()
 
         # Preferências
@@ -195,8 +202,7 @@ class Tray:
     def retranslate(self):
         for key in MODES:
             self.actions[key].setText(mode_label(key))
-        self.min_menu.setTitle(tr("menu_min"))
-        self.fixed_menu.setTitle(tr("menu_fixed"))
+        self.update_mode_checks()             # títulos dos submenus (com o valor ativo)
         self.unit_menu.setTitle(tr("menu_unit"))
         self.unit_actions["C"].setText(tr("celsius"))
         self.unit_actions["F"].setText(tr("fahrenheit"))
@@ -312,6 +318,12 @@ class Tray:
         for key, a in self.actions.items():
             a.setChecked(key == mode)
             a.setEnabled(active)
+        # Submenus mostram que estão ativos (marcação + valor no nome)
+        for menu, prefix, title in ((self.min_menu, "min:", "menu_min"),
+                                    (self.fixed_menu, "fixed:", "menu_fixed")):
+            on = active and mode.startswith(prefix)
+            menu.menuAction().setChecked(on)
+            menu.setTitle(tr(title) + (f" ({mode.split(':', 1)[1]}%)" if on else ""))
 
     def set_mode(self, mode):
         try:
@@ -362,13 +374,45 @@ class Tray:
             self.last_tip = tip
 
 
+INSTANCE = f"benjabreeze-tray-{os.getuid()}"
+
+
+def already_running():
+    """Se já existe um ícone aberto, avisa ele e devolve True (instância única)."""
+    sock = QLocalSocket()
+    sock.connectToServer(INSTANCE)
+    if sock.waitForConnected(300):
+        sock.write(b"show")
+        sock.flush()
+        sock.waitForBytesWritten(300)
+        sock.disconnectFromServer()
+        return True
+    return False
+
+
 def main():
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(False)
     app.setApplicationName("benjabreeze-tray")
+    if already_running():
+        sys.exit(0)
     if not QSystemTrayIcon.isSystemTrayAvailable():
         sys.exit("bandeja do sistema não disponível")
-    _t = Tray(app)  # noqa: F841 (mantém referência viva)
+    t = Tray(app)
+
+    QLocalServer.removeServer(INSTANCE)           # limpa socket de uma execução que travou
+    server = QLocalServer()
+    server.listen(INSTANCE)
+
+    def on_second_launch():
+        conn = server.nextPendingConnection()
+        if conn is not None:
+            conn.disconnected.connect(conn.deleteLater)
+        t.tray.showMessage("BenjaBreeze", tr("already_open"),
+                           QSystemTrayIcon.MessageIcon.Information, 4000)
+        t.start_if_stopped()
+
+    server.newConnection.connect(on_second_launch)
     sys.exit(app.exec())
 
 

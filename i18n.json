@@ -42,7 +42,8 @@
     "power_on": "Ligar BenjaBreeze",
     "power_fail": "Não foi possível alterar o serviço (senha cancelada?).",
     "off_title": "BenjaBreeze desligado",
-    "off_body": "As ventoinhas voltaram ao controle do firmware da Acer. O BenjaBreeze volta de onde parou quando você reiniciar o computador ou abrir o app de novo."
+    "off_body": "As ventoinhas voltaram ao controle do firmware da Acer. O BenjaBreeze volta de onde parou quando você reiniciar o computador ou abrir o app de novo.",
+    "already_open": "O BenjaBreeze já está aberto aqui na bandeja."
   },
   "en_US": {
     "temps": "Temperatures",
@@ -87,7 +88,8 @@
     "power_on": "Turn on BenjaBreeze",
     "power_fail": "Could not change the service (password cancelled?).",
     "off_title": "BenjaBreeze turned off",
-    "off_body": "The fans are back under Acer firmware control. BenjaBreeze will resume where it left off when you restart the computer or open the app again."
+    "off_body": "The fans are back under Acer firmware control. BenjaBreeze will resume where it left off when you restart the computer or open the app again.",
+    "already_open": "BenjaBreeze is already open here in the system tray."
   },
   "es": {
     "temps": "Temperaturas",
@@ -132,7 +134,8 @@
     "power_on": "Encender BenjaBreeze",
     "power_fail": "No se pudo cambiar el servicio (¿contraseña cancelada?).",
     "off_title": "BenjaBreeze apagado",
-    "off_body": "Los ventiladores volvieron al control del firmware de Acer. BenjaBreeze continuará donde lo dejó cuando reinicies el equipo o abras la app de nuevo."
+    "off_body": "Los ventiladores volvieron al control del firmware de Acer. BenjaBreeze continuará donde lo dejó cuando reinicies el equipo o abras la app de nuevo.",
+    "already_open": "BenjaBreeze ya está abierto aquí en la bandeja del sistema."
   },
   "de": {
     "temps": "Temperaturen",
@@ -177,7 +180,8 @@
     "power_on": "BenjaBreeze einschalten",
     "power_fail": "Der Dienst konnte nicht geändert werden (Passwort abgebrochen?).",
     "off_title": "BenjaBreeze ausgeschaltet",
-    "off_body": "Die Lüfter werden wieder von der Acer-Firmware gesteuert. BenjaBreeze macht dort weiter, wo es aufgehört hat, wenn du den Computer neu startest oder die App erneut öffnest."
+    "off_body": "Die Lüfter werden wieder von der Acer-Firmware gesteuert. BenjaBreeze macht dort weiter, wo es aufgehört hat, wenn du den Computer neu startest oder die App erneut öffnest.",
+    "already_open": "BenjaBreeze ist bereits hier im Systemabschnitt geöffnet."
   },
   "fr": {
     "temps": "Températures",
@@ -222,7 +226,8 @@
     "power_on": "Activer BenjaBreeze",
     "power_fail": "Impossible de modifier le service (mot de passe annulé ?).",
     "off_title": "BenjaBreeze désactivé",
-    "off_body": "Les ventilateurs sont de nouveau contrôlés par le firmware Acer. BenjaBreeze reprendra là où il s'était arrêté au redémarrage de l'ordinateur ou à la réouverture de l'application."
+    "off_body": "Les ventilateurs sont de nouveau contrôlés par le firmware Acer. BenjaBreeze reprendra là où il s'était arrêté au redémarrage de l'ordinateur ou à la réouverture de l'application.",
+    "already_open": "BenjaBreeze est déjà ouvert ici dans la zone de notification."
   },
   "ru": {
     "temps": "Температуры",
@@ -267,7 +272,8 @@
     "power_on": "Включить BenjaBreeze",
     "power_fail": "Не удалось изменить службу (ввод пароля отменён?).",
     "off_title": "BenjaBreeze выключен",
-    "off_body": "Вентиляторы снова под управлением прошивки Acer. BenjaBreeze продолжит с того же места после перезагрузки компьютера или повторного запуска приложения."
+    "off_body": "Вентиляторы снова под управлением прошивки Acer. BenjaBreeze продолжит с того же места после перезагрузки компьютера или повторного запуска приложения.",
+    "already_open": "BenjaBreeze уже открыт здесь, в системном лотке."
   },
   "ja": {
     "temps": "温度",
@@ -312,7 +318,8 @@
     "power_on": "BenjaBreeze をオンにする",
     "power_fail": "サービスを変更できませんでした (パスワード入力がキャンセルされた可能性があります)。",
     "off_title": "BenjaBreeze をオフにしました",
-    "off_body": "ファンは Acer ファームウェアの制御に戻りました。コンピューターを再起動するかアプリを再度開くと、BenjaBreeze は前回の状態から再開します。"
+    "off_body": "ファンは Acer ファームウェアの制御に戻りました。コンピューターを再起動するかアプリを再度開くと、BenjaBreeze は前回の状態から再開します。",
+    "already_open": "BenjaBreeze はすでにシステムトレイで開いています。"
   },
   "ko": {
     "temps": "온도",
@@ -357,7 +364,8 @@
     "power_on": "BenjaBreeze 켜기",
     "power_fail": "서비스를 변경할 수 없습니다 (비밀번호 입력이 취소되었나요?).",
     "off_title": "BenjaBreeze 꺼짐",
-    "off_body": "팬 제어가 Acer 펌웨어로 돌아갔습니다. 컴퓨터를 다시 시작하거나 앱을 다시 열면 BenjaBreeze가 이전 상태로 다시 시작됩니다."
+    "off_body": "팬 제어가 Acer 펌웨어로 돌아갔습니다. 컴퓨터를 다시 시작하거나 앱을 다시 열면 BenjaBreeze가 이전 상태로 다시 시작됩니다.",
+    "already_open": "BenjaBreeze가 이미 시스템 트레이에 열려 있습니다."
   },
   "zh_TW": {
     "temps": "溫度",
@@ -402,7 +410,8 @@
     "power_on": "啟用 BenjaBreeze",
     "power_fail": "無法變更服務（是否取消了密碼輸入？）。",
     "off_title": "BenjaBreeze 已停用",
-    "off_body": "風扇已交還 Acer 韌體控制。重新開機或再次開啟應用程式時，BenjaBreeze 會從上次的狀態繼續。"
+    "off_body": "風扇已交還 Acer 韌體控制。重新開機或再次開啟應用程式時，BenjaBreeze 會從上次的狀態繼續。",
+    "already_open": "BenjaBreeze 已經在系統匣中開啟。"
   },
   "zh_CN": {
     "temps": "温度",
@@ -447,6 +456,7 @@
     "power_on": "启用 BenjaBreeze",
     "power_fail": "无法更改服务（是否取消了密码输入？）。",
     "off_title": "BenjaBreeze 已停用",
-    "off_body": "风扇已交还 Acer 固件控制。重启电脑或再次打开应用时，BenjaBreeze 会从上次的状态继续。"
+    "off_body": "风扇已交还 Acer 固件控制。重启电脑或再次打开应用时，BenjaBreeze 会从上次的状态继续。",
+    "already_open": "BenjaBreeze 已经在系统托盘中打开。"
   }
 }
