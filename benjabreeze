@@ -21,7 +21,7 @@ import signal
 import sys
 import time
 
-VERSION = "0.6.0"
+VERSION = "0.6.1"
 CONF = "/etc/benjabreeze.json"
 RUN_DIR = "/run/benjabreeze"          # tmpfs (RAM): nada é gravado em disco
 MODE_FILE = RUN_DIR + "/mode"

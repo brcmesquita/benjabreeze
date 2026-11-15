@@ -39,7 +39,7 @@ def mode_label(mode):
     if mode.startswith("fixed:"):
         return f"Fixo {mode[6:]}%"
     if mode.startswith("min:"):
-        return f"Mínimo {mode[4:]}% (sobe se esquentar)"
+        return f"Mínimo {mode[4:]}%"
     return dict(MODES).get(mode, mode)
 
 
@@ -90,6 +90,13 @@ class Tray:
         self.tray = QSystemTrayIcon(make_icon(None))
         self.menu = QMenu()
 
+        title = self.menu.addAction(f"BenjaBreeze {pf.VERSION}")
+        title.setEnabled(False)
+        tf = title.font()
+        tf.setBold(True)
+        title.setFont(tf)
+        self.menu.addSeparator()
+
         self.info = [self.menu.addAction("") for _ in range(4)]
         for a in self.info:
             a.setEnabled(False)
@@ -100,13 +107,13 @@ class Tray:
         self.actions = {}
         for key, label in MODES:
             self.actions[key] = self._mode_action(self.menu, key, label)
+        sub = self.menu.addMenu("Velocidade mínima")
+        for pct in MINIMUM:
+            key = f"min:{pct}"
+            self.actions[key] = self._mode_action(sub, key, f"{pct}%")
         sub = self.menu.addMenu("Velocidade fixa")
         for pct in FIXED:
             key = f"fixed:{pct}"
-            self.actions[key] = self._mode_action(sub, key, f"{pct}%")
-        sub = self.menu.addMenu("Velocidade mínima (sobe se esquentar)")
-        for pct in MINIMUM:
-            key = f"min:{pct}"
             self.actions[key] = self._mode_action(sub, key, f"{pct}%")
 
         self.menu.addSeparator()

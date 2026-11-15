@@ -3,6 +3,12 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.6.1] — 2026-11-15
+
+### Alterado
+- Menu do ícone: nome e versão do app no topo; "Velocidade mínima" vem antes de
+  "Velocidade fixa"; rótulos mais curtos ("Mínimo 40%").
+
 ## [0.6.0] — 2026-11-15
 
 ### Adicionado
@@ -65,6 +71,7 @@ Primeira versão pública — só terminal (nome original: `predator-fan`).
 - Proteção: 100 % acima de 92 °C; controle volta ao firmware se o serviço parar.
 - `install.sh` / `uninstall.sh`.
 
+[0.6.1]: https://github.com/brcmesquita/benjabreeze/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.3.0...v0.4.0
