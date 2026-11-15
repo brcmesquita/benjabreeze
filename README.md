@@ -4,16 +4,17 @@ Controle de ventoinhas para notebooks **Acer Predator** no Linux, usando apenas 
 `acer_wmi` que já vem no kernel — **sem módulo de kernel extra, sem compilar nada**.
 
 *Fan control for Acer Predator laptops on Linux using only the in-kernel `acer_wmi`
-hwmon interface (no out-of-tree modules). Simple daemon + CLI.*
+hwmon interface (no out-of-tree modules). Simple daemon + CLI + KDE/Qt tray icon.*
 
 ## Recursos
 
 - Modos: `auto` (firmware Acer), `curve`, `silent`, `max` e velocidade fixa
 - Curvas temperatura → velocidade configuráveis, com histerese (evita sobe-e-desce)
+- Ícone na bandeja mostrando a temperatura, com menu para trocar de modo
 - Segurança: acima de 92 °C (configurável) força 100 %; se o serviço parar ou falhar,
   o controle volta ao firmware
 - Trocar de modo não exige sudo
-- Python puro, sem dependências
+- Python puro (o ícone usa PyQt6)
 
 ## Requisitos
 
@@ -24,6 +25,7 @@ hwmon interface (no out-of-tree modules). Simple daemon + CLI.*
   ls $(dirname $(grep -l acer /sys/class/hwmon/hwmon*/name))   # deve listar pwm1, pwm2
   ```
 - Python 3, systemd
+- Para o ícone: PyQt6 (`sudo apt install python3-pyqt6`)
 
 Testado em: **Predator Helios Neo 16 (PHN16-72)**, Kubuntu, kernel 7.0.
 Outros modelos com a mesma interface devem funcionar — relatos são bem-vindos.
@@ -49,6 +51,8 @@ O padrão após instalar é `auto`: nada muda até você escolher outro modo.
 | `predator-fan silent` | curva silenciosa |
 | `predator-fan max` | 100 % |
 | `predator-fan set 60` | fixo em 60 % (proteção de 92 °C continua ativa) |
+
+Ícone na bandeja: `predator-fan-tray` (ou "Predator Fan" no menu; inicia no login).
 
 O modo volta ao `default_mode` a cada boot.
 

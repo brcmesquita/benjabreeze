@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+"""predator-fan-tray — ícone na bandeja para o predator-fan (PyQt6).
+
+Mostra a temperatura no ícone e permite trocar o modo das ventoinhas
+pelo menu. Depende do serviço predator-fan estar rodando.
+"""
+import importlib.machinery
+import importlib.util
+import os
+import sys
+
+from PyQt6.QtCore import QTimer, Qt, QRectF
+from PyQt6.QtGui import QAction, QActionGroup, QColor, QFont, QIcon, QPainter, QPixmap
+from PyQt6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
+
+# Reaproveita as funções do script principal (mesma pasta ou /usr/local/bin)
+_here = os.path.dirname(os.path.realpath(__file__))
+for _p in (os.path.join(_here, "predator-fan"), "/usr/local/bin/predator-fan"):
+    if os.path.exists(_p):
+        _loader = importlib.machinery.SourceFileLoader("predator_fan", _p)
+        _spec = importlib.util.spec_from_loader("predator_fan", _loader)
+        pf = importlib.util.module_from_spec(_spec)
+        _loader.exec_module(pf)
+        break
+else:
+    sys.exit("predator-fan não encontrado")
+
+MODES = [
+    ("auto", "Automático (firmware Acer)"),
+    ("curve", "Curva normal"),
+    ("silent", "Silencioso"),
+    ("max", "Máximo (100%)"),
+]
+FIXED = [30, 50, 70]
+
+
+def temp_color(t):
+    if t is None:
+        return QColor("#888888")
+    if t < 60:
+        return QColor("#3fb950")
+    if t < 75:
+        return QColor("#d29922")
+    if t < 85:
+        return QColor("#f0883e")
+    return QColor("#f85149")
+
+
+def make_icon(t):
+    pm = QPixmap(64, 64)
+    pm.fill(Qt.GlobalColor.transparent)
+    p = QPainter(pm)
+    p.setRenderHint(QPainter.RenderHint.Antialiasing)
+    p.setBrush(temp_color(t))
+    p.setPen(Qt.PenStyle.NoPen)
+    p.drawRoundedRect(QRectF(2, 2, 60, 60), 14, 14)
+    p.setPen(QColor("white"))
+    f = QFont()
+    f.setBold(True)
+    f.setPixelSize(36)
+    p.setFont(f)
+    p.drawText(pm.rect(), Qt.AlignmentFlag.AlignCenter, "?" if t is None else f"{t:.0f}")
+    p.end()
+    return QIcon(pm)
+
+
+def service_active():
+    return os.system("systemctl is-active --quiet predator-fan") == 0
+
+
+class Tray:
+    def __init__(self, app):
+        self.app = app
+        self.tray = QSystemTrayIcon(make_icon(None))
+        self.menu = QMenu()
+
+        self.info = [self.menu.addAction("") for _ in range(4)]
+        for a in self.info:
+            a.setEnabled(False)
+        self.menu.addSeparator()
+
+        self.group = QActionGroup(self.menu)
+        self.group.setExclusive(True)
+        self.actions = {}
+        for key, label in MODES:
+            self.actions[key] = self._mode_action(self.menu, key, label)
+        sub = self.menu.addMenu("Velocidade fixa")
+        for pct in FIXED:
+            key = f"fixed:{pct}"
+            self.actions[key] = self._mode_action(sub, key, f"{pct}%")
+
+        self.menu.addSeparator()
+        quit_act = self.menu.addAction("Fechar ícone")
+        quit_act.triggered.connect(app.quit)
+
+        self.tray.setContextMenu(self.menu)
+        self.tray.activated.connect(self._on_click)
+        self.tray.show()
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.refresh)
+        self.timer.start(2000)
+        self.refresh()
+
+    def _mode_action(self, menu, key, label):
+        a = QAction(label, menu, checkable=True)
+        a.triggered.connect(lambda _=False, k=key: self.set_mode(k))
+        self.group.addAction(a)
+        menu.addAction(a)
+        return a
+
+    def _on_click(self, reason):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            self.menu.popup(self.tray.geometry().center())
+
+    def set_mode(self, mode):
+        try:
+            with open(pf.MODE_FILE, "w") as f:
+                f.write(mode)
+        except OSError:
+            self.tray.showMessage(
+                "predator-fan",
+                "Serviço não está rodando.\nsudo systemctl start predator-fan",
+                QSystemTrayIcon.MessageIcon.Warning,
+            )
+        self.refresh()
+
+    def refresh(self):
+        t = pf.temps()
+        tmax = max(t.values()) if t else None
+        hw = pf.find_hwmon("acer")
+        fans = []
+        if hw:
+            for i in (1, 2):
+                try:
+                    fans.append(pf.rd(f"{hw}/fan{i}_input"))
+                except OSError:
+                    fans.append(None)
+        active = service_active()
+        mode = pf.read_mode("?") if active else "serviço parado"
+
+        cpu = t.get("cpu_pkg")
+        lines = [
+            f"CPU: {cpu:.0f}°C" if cpu is not None else "CPU: ?",
+            f"Máx. sensores: {tmax:.0f}°C" if tmax is not None else "Sensores: ?",
+            "Ventoinhas: " + " / ".join(f"{r} RPM" if r is not None else "?" for r in fans),
+            f"Modo: {dict(MODES).get(mode, mode)}",
+        ]
+        for a, txt in zip(self.info, lines):
+            a.setText(txt)
+        for key, a in self.actions.items():
+            a.setChecked(key == mode)
+            a.setEnabled(active)
+
+        self.tray.setIcon(make_icon(tmax))
+        self.tray.setToolTip("predator-fan\n" + "\n".join(lines))
+
+
+def main():
+    app = QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
+    app.setApplicationName("predator-fan-tray")
+    if not QSystemTrayIcon.isSystemTrayAvailable():
+        sys.exit("bandeja do sistema não disponível")
+    _t = Tray(app)  # noqa: F841 (mantém referência viva)
+    sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

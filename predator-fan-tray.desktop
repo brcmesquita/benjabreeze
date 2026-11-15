@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Predator Fan
+Comment=Controle de ventoinhas Acer Predator
+Exec=/usr/local/bin/predator-fan-tray
+Icon=temperature-normal
+Terminal=false
+Categories=System;Monitor;
+X-GNOME-Autostart-enabled=true
