@@ -84,6 +84,9 @@ class Tray:
         self.hw = pf.find_hwmon("acer")
         self.last_icon_temp = object()
         self.last_tip = None
+        self.cfg = pf.Config()
+        self.warned = False
+        self.warn_mode = None
         self.tray = QSystemTrayIcon(make_icon(None))
         self.menu = QMenu()
 
@@ -112,6 +115,7 @@ class Tray:
 
         self.tray.setContextMenu(self.menu)
         self.tray.activated.connect(self._on_click)
+        self.tray.messageClicked.connect(self._on_message_click)
         self.tray.show()
 
         self.menu.aboutToShow.connect(self.refresh)  # dados frescos ao abrir o menu
@@ -130,6 +134,33 @@ class Tray:
     def _on_click(self, reason):
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
             self.menu.popup(self.tray.geometry().center())
+
+    def _on_message_click(self):
+        # Clicar no aviso: troca "fixo N%" por "mínimo N%" (sobe se esquentar)
+        mode = pf.read_mode("")
+        if self.warned and mode.startswith("fixed:"):
+            self.set_mode("min:" + mode[6:])
+
+    def check_warning(self, mode, tmax):
+        """No modo fixo, avisa uma vez quando passa de warn_temp; rearma 5 °C abaixo."""
+        if not mode.startswith("fixed:") or tmax is None:
+            self.warned = False
+            return
+        if mode != self.warn_mode:
+            self.warned, self.warn_mode = False, mode
+        warn = self.cfg.get()["warn_temp"]
+        if not self.warned and tmax >= warn:
+            pct = mode[6:]
+            self.tray.showMessage(
+                "Notebook esquentando",
+                f"{tmax:.0f}°C com a ventoinha fixa em {pct}%.\n"
+                f"Clique aqui para usar mínimo de {pct}% (sobe se precisar).",
+                QSystemTrayIcon.MessageIcon.Warning,
+                10000,
+            )
+            self.warned = True
+        elif self.warned and tmax < warn - 5:
+            self.warned = False
 
     def set_mode(self, mode):
         try:
@@ -166,6 +197,7 @@ class Tray:
             "Ventoinhas: " + " / ".join(f"{r} RPM" if r is not None else "?" for r in fans),
             f"Modo: {mode_label(mode)}",
         ]
+        self.check_warning(mode, tmax)
         for a, txt in zip(self.info, lines):
             a.setText(txt)
         for key, a in self.actions.items():

@@ -3,6 +3,14 @@
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versões seguem [SemVer](https://semver.org/lang/pt-BR/).
 
+## [0.6.0] — 2026-11-15
+
+### Adicionado
+- Aviso de temperatura no modo `set` fixo: a partir de `warn_temp` (padrão 85 °C) o
+  ícone mostra uma notificação; clicar nela troca `set N` por `min N`. O aviso também
+  vai para o journal (`journalctl -u benjabreeze`). Rearma 5 °C abaixo do limite.
+- Opções `warn_temp` e `min_curve` no `benjabreeze.json` de exemplo.
+
 ## [0.5.0] — 2026-11-15
 
 ### Adicionado
@@ -57,6 +65,7 @@ Primeira versão pública — só terminal (nome original: `predator-fan`).
 - Proteção: 100 % acima de 92 °C; controle volta ao firmware se o serviço parar.
 - `install.sh` / `uninstall.sh`.
 
+[0.6.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/brcmesquita/benjabreeze/compare/v0.2.0...v0.3.0

@@ -17,6 +17,8 @@ hwmon interface (no out-of-tree modules). Lightweight daemon + CLI + KDE/Qt tray
 - Ícone na bandeja mostrando a temperatura, com menu para trocar de modo
 - Segurança: acima de 92 °C (configurável) força 100 %; se o serviço parar ou falhar,
   o controle volta ao firmware
+- Aviso no modo fixo: se esquentar (85 °C, configurável), o ícone avisa — e um clique
+  troca para `min` com a mesma velocidade
 - Trocar de modo não exige sudo
 - Leve: não grava nada em disco, não gera logs; no modo `auto` nem lê sensores
   (veja [Consumo de recursos](#consumo-de-recursos-e-privacidade))
@@ -76,7 +78,9 @@ O modo volta ao `default_mode` a cada boot.
   (sobe quando aquece, volta quando esfria), é isto.
 - **`max`** — 100 % o tempo todo.
 - **`set N`** — **fixo** em N %, não importa a temperatura. A única exceção é a proteção:
-  a partir de 92 °C vai para 100 %. Se você quer "pelo menos N %, mas subindo quando
+  a partir de 92 °C vai para 100 %. A partir de 85 °C (`warn_temp`) o ícone mostra
+  um aviso; clicar nele troca `set N` por `min N`. Sem o ícone, o aviso aparece em
+  `journalctl -u benjabreeze`. Se você quer "pelo menos N %, mas subindo quando
   precisar", use `min`.
 - **`min N`** — velocidade mínima de trabalho. Fica em N % enquanto a temperatura está
   sob controle; se ela subir (troca para modo desempenho, carga pesada), acelera seguindo
@@ -116,6 +120,7 @@ O modo volta ao `default_mode` a cada boot.
   "interval": 2.0,
   "hysteresis": 4,
   "panic_temp": 92,
+  "warn_temp": 85,
   "default_mode": "auto",
   "min_curve": "curve",
   "curves": {
@@ -134,9 +139,6 @@ do mínimo.
 
 Próximas versões, uma funcionalidade por release:
 
-- **v0.6.0 — Aviso de temperatura**: no modo `set` fixo, o ícone mostra uma notificação
-  quando a temperatura passa de um limite (ex. 85 °C), sugerindo aumentar a velocidade
-  ou usar `min`.
 - **v0.7.0 — Relatório de compatibilidade**: `benjabreeze report` gera um texto com
   modelo, BIOS, kernel e interfaces detectadas, para colar numa issue do GitHub.
 

@@ -21,7 +21,7 @@ import signal
 import sys
 import time
 
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 CONF = "/etc/benjabreeze.json"
 RUN_DIR = "/run/benjabreeze"          # tmpfs (RAM): nada é gravado em disco
 MODE_FILE = RUN_DIR + "/mode"
@@ -29,6 +29,7 @@ DEFAULT_CONF = {
     "interval": 2.0,
     "hysteresis": 4,          # °C que a temperatura precisa cair antes de reduzir
     "panic_temp": 92,         # acima disso: 100% em qualquer modo exceto auto
+    "warn_temp": 85,          # modo set fixo: avisa (ícone e journal) a partir daqui
     "default_mode": "auto",
     "min_curve": "curve",     # curva usada acima do mínimo no modo min
     "curves": {               # [temperatura °C, velocidade %], interpolação linear
@@ -203,7 +204,7 @@ def daemon():
             f.write(conf["default_mode"])
     os.chmod(MODE_FILE, 0o666)  # permite trocar modo sem sudo (valor é validado)
 
-    last_mode, cur_pct, st = None, None, {}
+    last_mode, cur_pct, st, warned = None, None, {}, False
     try:
         while True:
             conf = cfg.get()
@@ -221,9 +222,18 @@ def daemon():
                 continue
 
             if mode != last_mode:
-                st = {}
+                st, warned = {}, False
             t = temps(sensors)
-            target = compute_target(mode, max(t.values()) if t else None, conf, st)
+            tmax = max(t.values()) if t else None
+            target = compute_target(mode, tmax, conf, st)
+            if mode.startswith("fixed:") and tmax is not None:
+                if not warned and tmax >= conf["warn_temp"]:
+                    print(f"aviso: {tmax:.0f}°C com velocidade fixa em {mode[6:]}% — "
+                          f"considere aumentar ou usar 'benjabreeze min {mode[6:]}'",
+                          file=sys.stderr, flush=True)
+                    warned = True
+                elif warned and tmax < conf["warn_temp"] - 5:
+                    warned = False
             if target != cur_pct or mode != last_mode:
                 for f in fans:
                     if rd(f"{f}_enable") != 1:
